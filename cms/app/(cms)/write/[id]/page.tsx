@@ -14,7 +14,7 @@ export default async function WriteEditPage({ params }: PageProps<"/write/[id]">
 
   return (
     <>
-      <h1 className="mb-4 text-lg font-semibold">{readOnly ? "글 보기" : "글 수정"}</h1>
+      <h1 className="page-title mb-5">{readOnly ? "글 보기" : "글 수정"}</h1>
       <WriteForm post={post} readOnly={readOnly} tree={tree} />
     </>
   );

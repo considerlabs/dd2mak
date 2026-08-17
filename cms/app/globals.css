@@ -1,16 +1,66 @@
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css");
 @import "tailwindcss";
 
 :root {
-  --background: #f4f4f5;
-  --foreground: #18181b;
+  --background: #f5f7f6;
+  --foreground: #1f2933;
+  --card: #ffffff;
+  --card-foreground: #1f2933;
+  --primary: #5b21b6;
+  --primary-dark: #4c1d95;
+  --primary-foreground: #ffffff;
+  --accent: #7c3aed;
+  --accent-dark: #6d28d9;
+  --muted: #f1e9fe;
+  --muted-foreground: #52606d;
+  --border: #dde3e1;
+  --ring: #7c3aed;
+  --destructive: #b3261e;
+  --success: #1e7d32;
+  --sidebar: #faf8ff;
+  --sidebar-foreground: #1f2933;
+  --sidebar-accent: #f1e9fe;
+  --sidebar-accent-foreground: #4c1d95;
+  --sidebar-border: #dde3e1;
+  --radius: 0.625rem;
+  --shadow-primary: 0 14px 28px -16px rgba(91, 33, 182, 0.55);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-xl: var(--radius);
 }
 
 @layer base {
+  html {
+    font-family: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  }
+
   body {
     background: var(--background);
     color: var(--foreground);
     font-size: 14px;
     line-height: 1.5;
+    word-break: keep-all;
   }
 
   input,
@@ -24,19 +74,20 @@
   select,
   textarea {
     width: 100%;
-    min-height: 34px;
-    border: 1px solid #d4d4d8;
-    border-radius: 6px;
-    padding: 6px 10px;
-    background: #fff;
-    color: #18181b;
+    min-height: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    background: var(--card);
+    color: var(--foreground);
   }
 
   input:focus,
   select:focus,
   textarea:focus {
-    outline: 2px solid #18181b;
-    outline-offset: 1px;
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
   }
 
   textarea {
@@ -47,8 +98,28 @@
   label {
     display: block;
     font-size: 13px;
-    font-weight: 500;
-    color: #3f3f46;
-    margin-bottom: 4px;
+    font-weight: 600;
+    color: var(--foreground);
+    margin-bottom: 6px;
   }
+}
+
+.card {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: 0 1px 2px rgba(31, 41, 51, 0.04);
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.page-desc {
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
 }

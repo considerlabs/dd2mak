@@ -19,7 +19,7 @@ export async function loginAction(data: FormData) {
     return { error: "아이디 또는 비밀번호가 올바르지 않습니다." };
   }
   await setSession(user);
-  redirect("/posts");
+  redirect("/");
 }
 
 export async function logoutAction() {

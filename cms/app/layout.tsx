@@ -1,7 +1,4 @@
-import { Geist } from "next/font/google";
 import "./globals.css";
-
-const geist = Geist({ subsets: ["latin"] });
 
 export const metadata = {
   title: "블로그 관리",
@@ -10,8 +7,8 @@ export const metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${geist.className} h-full`}>
-      <body className="min-h-full bg-zinc-100 text-zinc-900">{children}</body>
+    <html lang="ko" className="h-full">
+      <body className="min-h-full bg-background text-foreground antialiased">{children}</body>
     </html>
   );
 }

@@ -20,7 +20,10 @@ export function SubmitButton({
       name={name}
       value={value}
       disabled={pending}
-      className={className || "h-8 rounded-md bg-zinc-900 px-3 text-sm text-white disabled:opacity-60"}
+      className={
+        className ||
+        "inline-flex h-9 items-center rounded-lg bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-[0_14px_28px_-16px_rgba(91,33,182,0.75)] hover:bg-primary/92 disabled:opacity-60"
+      }
     >
       {pending ? "처리 중…" : children}
     </button>
@@ -28,4 +31,4 @@ export function SubmitButton({
 }
 
 export const secondaryBtn =
-  "h-8 rounded-md border border-zinc-300 bg-white px-3 text-sm text-zinc-800 hover:bg-zinc-50";
+  "inline-flex h-9 items-center rounded-lg border border-border bg-card px-3.5 text-sm font-medium text-foreground hover:bg-muted";

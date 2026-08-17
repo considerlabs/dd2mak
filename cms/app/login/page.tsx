@@ -11,17 +11,31 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-100 p-6">
-      <form action={action} className="w-full max-w-sm rounded-md border border-zinc-200 bg-white p-6">
-        <h1 className="mb-1 text-lg font-semibold">블로그 관리</h1>
-        <p className="mb-5 text-sm text-zinc-500">글 작성 · 검수 · 발행</p>
-        {state?.error ? <p className="mb-3 text-sm text-red-600">{state.error}</p> : null}
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-6">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 left-1/2 h-[560px] w-[860px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(91,33,182,0.12)_0%,transparent_70%)]" />
+        <div className="absolute bottom-0 right-0 h-[320px] w-[420px] rounded-full bg-[radial-gradient(ellipse,rgba(124,58,237,0.1)_0%,transparent_70%)]" />
+      </div>
+      <form action={action} className="card w-full max-w-sm p-7">
+        <div className="mb-5 flex items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_20px_-10px_rgba(91,33,182,0.65)]">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </span>
+          <div>
+            <h1 className="text-base font-bold tracking-tight">블로그 관리</h1>
+            <p className="text-xs text-muted-foreground">글 작성 · 검수 · 발행</p>
+          </div>
+        </div>
+        {state?.error ? <p className="mb-3 text-sm text-destructive">{state.error}</p> : null}
         <label htmlFor="login">아이디</label>
         <input id="login" name="login" className="mb-3" autoComplete="username" />
         <label htmlFor="password">비밀번호</label>
         <input id="password" name="password" type="password" className="mb-5" autoComplete="current-password" />
         <SubmitButton>로그인</SubmitButton>
-        <p className="mt-4 text-xs text-zinc-500">
+        <p className="mt-4 text-xs text-muted-foreground">
           writer / writer
           <br />
           reviewer / reviewer

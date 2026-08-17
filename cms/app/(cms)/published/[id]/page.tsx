@@ -12,7 +12,7 @@ export default async function PublishedEditPage({ params }: PageProps<"/publishe
   if (!post) notFound();
   return (
     <>
-      <h1 className="mb-4 text-lg font-semibold">발행된 글</h1>
+      <h1 className="page-title mb-5">발행된 글</h1>
       <ReviewForm post={post} ready={configuredChannels()} />
     </>
   );

@@ -71,7 +71,7 @@ export function CategorySelect({
         </select>
       </div>
       <input type="hidden" name="category" value={final} />
-      <p className="mt-2 text-xs text-zinc-500">
+      <p className="mt-2 text-xs text-muted-foreground">
         주메뉴를 고르면 오른쪽에 해당 하위메뉴가 나타납니다. 하위메뉴가 없거나 주메뉴로 바로 등록하려면 &quot;선택 안 함&quot;으로 두세요.
       </p>
     </div>

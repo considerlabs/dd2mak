@@ -21,8 +21,8 @@ export function WriteForm({
   const count = plainCharCount(post?.content || "");
 
   return (
-    <form action={action} className="rounded-md border border-zinc-200 bg-white p-5">
-      {state?.error ? <p className="mb-3 text-sm text-red-600">{state.error}</p> : null}
+    <form action={action} className="card p-5">
+      {state?.error ? <p className="mb-3 text-sm text-destructive">{state.error}</p> : null}
       <input type="hidden" name="id" value={post?.id || ""} />
       <div className="mb-3">
         <CategorySelect tree={tree} value={post?.category} readOnly={readOnly} />
@@ -37,7 +37,7 @@ export function WriteForm({
       <input id="excerpt" name="excerpt" className="mb-3" defaultValue={post?.excerpt || ""} readOnly={readOnly} placeholder="목록에 보일 한두 줄 요약" />
       <label htmlFor="content">본문</label>
       <textarea id="content" name="content" className="mb-2" defaultValue={post?.content || ""} readOnly={readOnly} />
-      <p className="mb-4 text-xs text-zinc-500">글자 수(태그 제외): {count}자 · 목표 약 2,000자</p>
+      <p className="mb-4 text-xs text-muted-foreground">글자 수(태그 제외): {count}자 · 목표 약 2,000자</p>
       {readOnly ? null : (
         <div className="flex flex-wrap gap-2">
           <SubmitButton name="intent" value="generate" className={secondaryBtn}>

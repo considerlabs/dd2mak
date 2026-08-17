@@ -1,6 +1,7 @@
 # 인수인계 문서 v2.0 — dd2mak
 
 작성일: 2026-08-17  
+최종 수정: 2026-08-17 (CMS 대시보드 UI)  
 대상: 이 프로젝트를 이어받아 운영·개발할 담당자  
 이전 문서: `docs/handover.md` (v1.0, 2026-08-12, 워드프레스 테마만)
 
@@ -98,18 +99,21 @@ Git에 **넣지 않는 것**
 - Next.js App Router, Tailwind, TypeScript.
 - 데이터: `cms/data/store.json` (파일 JSON, 첫 실행 시 시드).
 - 인증: 쿠키 `dd2mak_session` (HMAC).
-- UI: 왼쪽 고정 사이드바, 오른쪽에서만 화면 전환. **일반 관리자 UI** (시니어용 큰 글씨·보라색 톤 아님). 시니어 UX는 공개 테마만 해당.
+- UI: 왼쪽 고정 사이드바 + 상단 블러 헤더, 오른쪽에서만 화면 전환.
+- **글자 크기·밀도는 일반 관리자 UI** (시니어용 큰 글씨·넓은 터치는 공개 테마만).
+- **색은 공개 테마와 같은 보라 톤.** 레이아웃 참고는 윤비서 데모 대시보드(`https://yunbiseo-demo.vercel.app/dashboard`)이고, 데모의 청록색은 쓰지 않는다.
 
 **메뉴**
 
 | 메뉴 | 경로 | 권한 |
 |---|---|---|
+| 대시보드 | `/` | 전원 |
 | 글 작성 | `/write` | 전원 |
 | 작성한 글 | `/posts` | 전원 (작성자는 본인 글만) |
 | 검수 대기 | `/review` | 검수자 |
 | 설정 | `/settings` | 검수자 |
 
-로그인 후 `/` 는 `/posts` 로 보낸다.
+로그인 후 `/`(대시보드)로 간다. 작성 중·검수 대기·발행됨 숫자와 최근 글이 보인다.
 
 ### 5.3 멀티채널 발행
 
@@ -144,6 +148,22 @@ OAuth 자동 갱신은 없음. 설정 화면에 토큰을 붙여 넣는다.
 | 디지털 생활 | 카카오톡, 키오스크, 모바일뱅킹, 정부24, 사기 예방 |
 
 하위 없이 주메뉴만 고르면 주메뉴 slug로 발행된다.
+
+### 5.6 CMS 화면 (2026-08-17 저녁)
+
+윤비서 데모 대시보드와 같은 **사이드바·카드·고정 헤더** 구조로 바꿨다. 색·폰트는 워드프레스 공개 테마를 따른다.
+
+| 토큰 | 값 | 출처 |
+|---|---|---|
+| primary | `#5b21b6` | 테마 `--color-primary` |
+| accent | `#7c3aed` | 테마 `--color-accent` |
+| tint / muted | `#f1e9fe` | 테마 `--color-primary-tint` |
+| background | `#f5f7f6` | 테마 `--color-bg-alt` |
+| text | `#1f2933` | 테마 `--color-text` |
+| border | `#dde3e1` | 테마 `--color-border` |
+| 폰트 | Pretendard | 테마와 동일 CDN |
+
+관련 파일: `cms/app/globals.css`, `cms/app/ui/shell.tsx`, `cms/app/ui/side-nav.tsx`, `cms/app/(cms)/page.tsx`.
 
 ---
 
@@ -189,7 +209,10 @@ WP 애플리케이션 비밀번호: WP 관리자 → 사용자 → 프로필 →
 | `cms/lib/channels.ts` | WP/티스토리/네이버 동시 발행 |
 | `cms/lib/content.ts` | 카테고리 트리, 상태 라벨, 프롬프트 |
 | `cms/app/actions.ts` | 로그인·저장·제출·발행·설정 |
-| `cms/app/ui/shell.tsx` | 왼쪽 사이드바 레이아웃 |
+| `cms/app/globals.css` | 테마 보라 톤 토큰, Pretendard |
+| `cms/app/ui/shell.tsx` | 사이드바 + 상단 헤더 레이아웃 |
+| `cms/app/ui/side-nav.tsx` | 대시보드·글 작성 등 메뉴 |
+| `cms/app/(cms)/page.tsx` | 대시보드(통계 카드·최근 글) |
 | `cms/app/ui/category-select.tsx` | 주메뉴/하위메뉴 셀렉트 |
 | `cms/middleware.ts` | 로그인 강제 |
 

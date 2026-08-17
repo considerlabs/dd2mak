@@ -12,7 +12,7 @@ export default async function ReviewEditPage({ params }: PageProps<"/review/[id]
   if (!post) notFound();
   return (
     <>
-      <h1 className="mb-4 text-lg font-semibold">검수</h1>
+      <h1 className="page-title mb-5">검수</h1>
       <ReviewForm post={post} ready={configuredChannels()} />
     </>
   );

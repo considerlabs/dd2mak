@@ -9,8 +9,8 @@ export default async function SettingsPage() {
   const { settings } = readStore();
   return (
     <>
-      <h1 className="mb-1 text-lg font-semibold">설정</h1>
-      <p className="mb-4 text-sm text-zinc-500">AI API와 발행할 블로그 채널을 연결합니다.</p>
+      <h1 className="page-title">설정</h1>
+      <p className="page-desc mb-5">AI API와 발행할 블로그 채널을 연결합니다.</p>
       <SettingsForm provider={settings.provider} keys={settings.keys} channels={settings.channels} />
     </>
   );
