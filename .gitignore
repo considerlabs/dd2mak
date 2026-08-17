@@ -1,0 +1,16 @@
+.DS_Store
+.tools/
+local-wordpress/
+.cursor/
+
+# CMS
+cms/node_modules/
+cms/.next/
+cms/out/
+cms/.env*
+cms/data/
+cms/*.tsbuildinfo
+cms/next-env.d.ts
+
+# Theme packages
+*.zip

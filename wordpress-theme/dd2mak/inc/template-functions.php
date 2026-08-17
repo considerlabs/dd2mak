@@ -1,0 +1,125 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) exit;
+
+/**
+ * 전화번호 문자열 -> tel: 링크용 값 (숫자와 +만 남김)
+ */
+function dd2mak_phone_href( $phone ) {
+	return preg_replace( '/[^0-9+]/', '', (string) $phone );
+}
+
+/**
+ * 신청 상태 -> 라벨/스타일
+ */
+function dd2mak_job_status_label( $status ) {
+	$map = array(
+		'open'    => array( 'label' => '모집중', 'class' => 'job-card__status--open' ),
+		'ongoing' => array( 'label' => '상시모집', 'class' => 'job-card__status--open' ),
+		'closed'  => array( 'label' => '마감', 'class' => 'job-card__status--closed' ),
+	);
+
+	return $map[ $status ] ?? $map['open'];
+}
+
+/**
+ * 같은 카테고리의 관련 글
+ */
+function dd2mak_related_posts( $post_id, $count = 3 ) {
+	$categories = wp_get_post_categories( $post_id );
+
+	if ( empty( $categories ) ) {
+		return new WP_Query( array( 'post__not_in' => array( $post_id ), 'posts_per_page' => $count ) );
+	}
+
+	return new WP_Query( array(
+		'category__in'   => $categories,
+		'post__not_in'   => array( $post_id ),
+		'posts_per_page' => $count,
+		'ignore_sticky_posts' => true,
+	) );
+}
+
+/**
+ * 목록 카드 (제목 + 요약 + 날짜 + 카테고리) - archive, search, related, popular 등에서 공통 사용
+ */
+function dd2mak_post_card( $post_id = null ) {
+	$post_id = $post_id ? $post_id : get_the_ID();
+	$categories = get_the_category( $post_id );
+	$reviewed = get_post_meta( $post_id, '_dd2mak_expert_reviewed', true );
+	?>
+	<a class="post-card" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">
+		<?php if ( has_post_thumbnail( $post_id ) ) : ?>
+			<span class="post-card__thumb" style="background-image:url('<?php echo esc_url( get_the_post_thumbnail_url( $post_id, 'dd2mak-card' ) ); ?>')"></span>
+		<?php endif; ?>
+		<span class="post-card__body">
+			<?php if ( ! empty( $categories ) ) : ?>
+				<span class="post-card__cat"><?php echo esc_html( $categories[0]->name ); ?></span>
+			<?php endif; ?>
+			<span class="post-card__title"><?php echo esc_html( get_the_title( $post_id ) ); ?></span>
+			<span class="post-card__excerpt"><?php echo esc_html( wp_trim_words( get_the_excerpt( $post_id ), 20 ) ); ?></span>
+			<span class="post-card__meta">
+				<span><?php echo esc_html( get_the_date( 'Y.m.d', $post_id ) ); ?></span>
+				<?php if ( '1' === $reviewed ) : ?>
+					<span class="post-card__review">전문가 검토완료</span>
+				<?php endif; ?>
+			</span>
+		</span>
+	</a>
+	<?php
+}
+
+/**
+ * 일자리·교육 공고 카드
+ */
+function dd2mak_job_card( $post_id = null ) {
+	$post_id = $post_id ? $post_id : get_the_ID();
+
+	$deadline = get_post_meta( $post_id, '_dd2mak_deadline', true );
+	$region   = get_post_meta( $post_id, '_dd2mak_region', true );
+	$cost     = get_post_meta( $post_id, '_dd2mak_cost', true );
+	$target   = get_post_meta( $post_id, '_dd2mak_target', true );
+	$status   = get_post_meta( $post_id, '_dd2mak_status', true );
+	$apply_url   = get_post_meta( $post_id, '_dd2mak_apply_url', true );
+	$apply_phone = get_post_meta( $post_id, '_dd2mak_apply_phone', true );
+
+	$status_info = dd2mak_job_status_label( $status );
+	?>
+	<div class="job-card">
+		<span class="job-card__status <?php echo esc_attr( $status_info['class'] ); ?>"><?php echo esc_html( $status_info['label'] ); ?></span>
+		<h3 class="job-card__title"><a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( get_the_title( $post_id ) ); ?></a></h3>
+		<ul class="job-card__facts">
+			<?php if ( $deadline ) : ?><li><strong>마감일</strong><?php echo esc_html( date_i18n( 'Y.m.d', strtotime( $deadline ) ) ); ?></li><?php endif; ?>
+			<?php if ( $region ) : ?><li><strong>지역</strong><?php echo esc_html( $region ); ?></li><?php endif; ?>
+			<?php if ( $cost ) : ?><li><strong>비용</strong><?php echo esc_html( $cost ); ?></li><?php endif; ?>
+			<?php if ( $target ) : ?><li><strong>대상</strong><?php echo esc_html( $target ); ?></li><?php endif; ?>
+		</ul>
+		<div class="job-card__actions">
+			<?php if ( $apply_url ) : ?>
+				<a class="btn btn-primary" href="<?php echo esc_url( $apply_url ); ?>" target="_blank" rel="noopener">신청하러 가기</a>
+			<?php elseif ( $apply_phone ) : ?>
+				<a class="btn btn-primary" href="tel:<?php echo esc_attr( dd2mak_phone_href( $apply_phone ) ); ?>"><?php echo esc_html( $apply_phone ); ?>로 신청하기</a>
+			<?php else : ?>
+				<a class="btn btn-secondary" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>">자세히 보기</a>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php
+}
+
+/**
+ * 간단한 이동 경로(breadcrumb)
+ */
+function dd2mak_breadcrumb() {
+	$items = array( '<a href="' . esc_url( home_url( '/' ) ) . '">홈</a>' );
+
+	if ( is_singular( 'post' ) ) {
+		$categories = get_the_category();
+		if ( ! empty( $categories ) ) {
+			$items[] = '<a href="' . esc_url( get_category_link( $categories[0]->term_id ) ) . '">' . esc_html( $categories[0]->name ) . '</a>';
+		}
+	} elseif ( is_singular( 'job_posting' ) ) {
+		$items[] = '<a href="' . esc_url( get_post_type_archive_link( 'job_posting' ) ) . '">일자리·교육 공고</a>';
+	}
+
+	echo '<nav class="breadcrumb" aria-label="이동 경로">' . implode( ' <span aria-hidden="true">›</span> ', $items ) . '</nav>'; // phpcs:ignore WordPress.Security.EscapeOutput
+}

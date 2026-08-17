@@ -1,0 +1,123 @@
+/*
+Theme Name: dd2mak 정보 서비스
+Description: 시니어 정보글 공개 화면. 글 작성·검수는 dd2mak-writer 플러그인을 사용합니다.
+Version: 1.0.0
+Text Domain: dd2mak-front
+*/
+
+:root {
+  --color-primary: #5b21b6;
+  --color-accent: #7c3aed;
+  --color-text: #1f1235;
+  --color-muted: #5b4a73;
+  --color-bg: #faf7ff;
+  --color-card: #ffffff;
+  --color-line: #e8dff8;
+}
+
+* { box-sizing: border-box; }
+html { font-size: 20px; }
+body {
+  margin: 0;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  line-height: 1.8;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+a { color: var(--color-primary); }
+img { max-width: 100%; height: auto; }
+
+.site-header {
+  background: #fff;
+  border-bottom: 1px solid var(--color-line);
+  padding: 16px 20px;
+}
+.site-header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.site-title {
+  font-size: 1.2rem;
+  margin: 0 0 12px;
+}
+.site-title a { color: var(--color-primary); text-decoration: none; }
+.site-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.site-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 16px;
+  background: #f1e9fe;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+.site-nav .current-menu-item a,
+.site-nav a:hover {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 28px 20px 64px;
+}
+.hero h1 { font-size: 1.6rem; line-height: 1.4; margin: 0 0 8px; }
+.hero p { color: var(--color-muted); margin: 0 0 24px; }
+
+.topic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 0 0 32px;
+}
+.topic-card {
+  display: block;
+  min-height: 72px;
+  padding: 16px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.post-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 0 16px;
+}
+.post-card h2 { margin: 0 0 8px; font-size: 1.15rem; line-height: 1.4; }
+.post-card h2 a { text-decoration: none; color: var(--color-text); }
+.meta { color: var(--color-muted); font-size: 0.9rem; }
+
+article h2 { font-size: 1.2rem; margin: 28px 0 8px; }
+.trust-box {
+  background: #f1e9fe;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 24px 0;
+  font-size: 0.95rem;
+}
+.site-footer {
+  text-align: center;
+  padding: 24px;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .topic-grid { grid-template-columns: 1fr; }
+}
