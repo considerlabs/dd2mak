@@ -349,7 +349,7 @@ export function SettingsForm({
                 id="naverClientId"
                 name="naverClientId"
                 className="mb-3"
-                defaultValue={mask(analyze?.naverClientId || "")}
+                defaultValue={analyze?.naverClientId || ""}
                 placeholder="네이버 Client ID"
               />
               <label htmlFor="naverClientSecret">Client Secret</label>
