@@ -55,13 +55,13 @@ function naverHeaders() {
   const id = s.analyze?.naverClientId || process.env.NAVER_CLIENT_ID || "";
   const secret = s.analyze?.naverClientSecret || process.env.NAVER_CLIENT_SECRET || "";
   if (!id || !secret) return null;
-  return { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret };
+  return { "X-NCP-APIGW-API-KEY-ID": id, "X-NCP-APIGW-API-KEY": secret };
 }
 
 async function naverSearchTotal(query: string, type: "blog" | "cafearticle" | "news" | "webkr") {
   const headers = naverHeaders();
   if (!headers) return null;
-  const url = `https://openapi.naver.com/v1/search/${type}.json?query=${encodeURIComponent(query)}&display=1`;
+  const url = `https://naverapihub.apigw.ntruss.com/search/v1/${type}?query=${encodeURIComponent(query)}&display=1`;
   const res = await fetch(url, { headers, cache: "no-store" });
   if (!res.ok) return null;
   const data = (await res.json()) as { total?: number };
