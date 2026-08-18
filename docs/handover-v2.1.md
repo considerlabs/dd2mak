@@ -21,7 +21,8 @@ CMS에 **콘텐츠 기획 파이프라인**(키워드 분석 → Copilot 적합�
    - 이번 세션에 `cms/lib/store.ts`에 **`/tmp` 폴백**을 추가해 크래시는 막았다(`writeStore`가 실패하면 `os.tmpdir()`로 전환).
    - 단, `/tmp`는 서버리스 인스턴스가 재시작(콜드스타트)되면 초기화된다. **즉 Vercel 배포판은 글·설정이 언제든 초기화될 수 있는 "데모" 상태다.** 실제 운영으로 쓰려면 DB(Vercel Postgres/KV 등)로 옮기는 작업이 필수이며, v2.0 §9에 있던 "DB로 옮기는 것을 검토" 항목이 이제 **필수**로 격상됐다.
 3. **Vercel 프로젝트가 새로 생성돼 있었고 루트 디렉터리가 잘못 설정돼 있었다.** 이번 세션에서 발견해 고쳤다(§5 참고). 대시보드에서 임의로 다시 바꾸지 말 것.
-4. **Vercel 프로덕션에는 환경변수가 하나도 없다.** `WP_URL`/`WP_USER`/`WP_APP_PASSWORD`, AI 키, `NAVER_CLIENT_ID`/`SECRET`, `COPILOT_*` 전부 미설정. 지금 배포판은 로그인(시드 계정 `writer`/`writer`, `reviewer`/`reviewer`, `admin`/`admin`)까지만 확인했고, 실제 발행·AI 초안·키워드 API 연동은 값을 넣기 전까지 동작하지 않는다.
+4. **Vercel 프로덕션 환경변수: `NAVER_CLIENT_ID`/`NAVER_CLIENT_SECRET`는 설정 완료.** `WP_URL`/`WP_USER`/`WP_APP_PASSWORD`, AI 키, `COPILOT_*`는 아직 미설정. 지금 배포판은 로그인(시드 계정 `writer`/`writer`, `reviewer`/`reviewer`, `admin`/`admin`)과 키워드 분석(네이버 문서량 조회)까지 확인했고, 실제 발행·AI 초안·Copilot 연동은 값을 넣기 전까지 동작하지 않는다.
+5. **네이버 검색 API는 구 오픈API가 아니라 NCP API 허브 방식이다.** §3 하단 주의 참고 — 엔드포인트·헤더가 다르다.
 
 ---
 
@@ -35,6 +36,8 @@ CMS에 **콘텐츠 기획 파이프라인**(키워드 분석 → Copilot 적합�
 ```
 
 블로그 자체 진단(`/analyze/blog`, 네이버·티스토리 RSS 기반)은 파이프라인과 별도로 사이드 도구로 존재한다.
+
+> **주의: 네이버 검색 API는 구 오픈API가 아니라 NCP API 허브다.** 이 프로젝트의 Client ID/Secret은 `developers.naver.com`이 아니라 **`console.ncloud.com/naver-api-hub`**에서 발급됐다. 그래서 엔드포인트가 `openapi.naver.com` + `X-Naver-Client-Id/Secret`가 아니라 **`https://naverapihub.apigw.ntruss.com/search/v1/{blog|cafearticle|news|webkr}`** + 헤더 **`X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY`**다(`cms/lib/analyze-keyword.ts`의 `naverHeaders`/`naverSearchTotal`, 2026-08-18 수정). 콘솔에서 API별로 "선택한 API" 체크박스가 있어야 하며, 체크 안 된 항목은 401(`이 Application에서 활성화되어 있지 않습니다`)이 난다 — 블로그·카페·뉴스·웹문서 4개 다 켜야 키워드 분석 화면의 문서량이 전부 채워진다.
 
 ### 3.1 키워드 분석 — `/analyze/keyword`
 
@@ -103,9 +106,9 @@ CMS에 **콘텐츠 기획 파이프라인**(키워드 분석 → Copilot 적합�
 
 ### 5.2 다음 담당자가 반드시 할 일
 
-- [ ] **환경변수 설정** (Vercel 대시보드 → dd2mak 프로젝트 → Settings → Environment Variables, 또는 `vercel env add`):
+- [x] `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — 완료(2026-08-18). NCP API 허브(`console.ncloud.com/naver-api-hub`) 발급 키이며 블로그·카페·뉴스·웹문서 4개 API 모두 활성화 확인함.
+- [ ] **나머지 환경변수 설정** (Vercel 대시보드 → dd2mak 프로젝트 → Settings → Environment Variables, 또는 `vercel env add`):
   - `WP_URL`, `WP_USER`, `WP_APP_PASSWORD` — 운영 워드프레스 Application Password
-  - `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — 네이버 검색 Open API (키워드 분석용)
   - `COPILOT_TENANT_ID`, `COPILOT_CLIENT_ID`, `COPILOT_CLIENT_SECRET`, 필요 시 `COPILOT_API_URL`/`COPILOT_TOKEN_URL`/`COPILOT_API_SCOPE`
   - AI 초안용 provider 키는 지금 구조상 `설정` 화면에서 저장하는 방식이라 환경변수로는 시드값만 채워짐 — **`/tmp` 폴백 특성상 화면에서 저장해도 콜드스타트 후 사라질 수 있다.** 영구 저장하려면 DB 마이그레이션이 선행돼야 함.
 - [ ] **스토리지를 DB로 이전.** 후보: Vercel Postgres, Vercel KV, 또는 기존 로컬 운영과 동일하게 별도 VM/컨테이너에 Node 서버로 배포(파일시스템 영구화). Vercel 서버리스를 계속 쓸 거면 DB 없이는 실운영 불가.
