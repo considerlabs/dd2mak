@@ -20,7 +20,47 @@ export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelI
   );
 
   return (
-    <form action={action} className="card p-5">
+    <div className="space-y-4">
+      {post.research ? (
+        <section className="card border-primary/20 p-5">
+          <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">왜 이 키워드인가</p>
+          <p className="mt-1 text-sm font-semibold">
+            {post.research.keyword}
+            <span
+              className={`ml-2 badge ${
+                post.research.fit === "적합"
+                  ? "badge-publish"
+                  : post.research.fit === "비추천"
+                    ? "badge-pending"
+                    : "badge-primary"
+              }`}
+            >
+              {post.research.fit} · {post.research.score}
+            </span>
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">{post.research.summary}</p>
+          {post.research.reasons.length > 0 ? (
+            <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-muted-foreground">
+              {post.research.reasons.slice(0, 3).map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          ) : null}
+          {post.research.caution.length > 0 ? (
+            <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              검수 포인트: {post.research.caution.join(" · ")}
+            </p>
+          ) : null}
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            출처·수치·주의 문구를 확인한 뒤 발행하세요.
+            {post.research.honeyScore != null
+              ? ` · 든든지수 ${post.research.honeyScore}/30 · ${post.research.limGrade || ""} ${post.research.competition || ""}`
+              : ""}
+          </p>
+        </section>
+      ) : null}
+
+      <form action={action} className="card p-6">
       {state?.error ? <p className="mb-3 text-sm text-destructive">{state.error}</p> : null}
       {"ok" in (state || {}) ? <p className="mb-3 text-sm text-success">저장했습니다.</p> : null}
       <input type="hidden" name="id" value={post.id} />
@@ -43,7 +83,7 @@ export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelI
         <input type="checkbox" name="aiDraft" value="1" defaultChecked={post.aiDraft} className="h-4 w-4" />
         AI 초안 표시 유지
       </label>
-      <label htmlFor="excerpt">요약</label>
+      <label htmlFor="excerpt">요약 <span className="font-normal text-muted-foreground">(본문 기반 자동 생성 · 필요 시 수정)</span></label>
       <input id="excerpt" name="excerpt" className="mb-3" defaultValue={post.excerpt || ""} />
       <label htmlFor="content">본문</label>
       <textarea id="content" name="content" className="mb-2" defaultValue={post.content} />
@@ -100,5 +140,6 @@ export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelI
         {pending ? <SubmitButton name="intent" value="publish">선택한 채널에 발행</SubmitButton> : null}
       </div>
     </form>
+    </div>
   );
 }

@@ -6,6 +6,16 @@ function authHeader(user: string, appPassword: string) {
   return "Basic " + Buffer.from(`${user}:${appPassword}`).toString("base64");
 }
 
+/** 사이트 루트 URL로 정규화 (/wp-admin, /wp-login.php 제거) */
+export function normalizeWpBaseUrl(url: string) {
+  return url
+    .trim()
+    .replace(/\/+$/, "")
+    .replace(/\/wp-admin(?:\/.*)?$/i, "")
+    .replace(/\/wp-login\.php(?:\?.*)?$/i, "")
+    .replace(/\/+$/, "");
+}
+
 function fallbackTree(): CategoryTree {
   return CATEGORY_TREE;
 }
@@ -17,7 +27,7 @@ export async function getWpCategoryTree(): Promise<CategoryTree> {
   const wpUser = ch.user || readStore().settings.wpUser;
   const wpAppPassword = ch.appPassword || readStore().settings.wpAppPassword;
   if (!wpUrl || !wpUser || !wpAppPassword) return fallback;
-  const base = wpUrl.replace(/\/$/, "");
+  const base = normalizeWpBaseUrl(wpUrl);
   try {
     const res = await fetch(`${base}/wp-json/wp/v2/categories?per_page=100&hide_empty=false`, {
       headers: { Authorization: authHeader(wpUser, wpAppPassword) },
@@ -52,7 +62,7 @@ export async function publishToWordPress(post: Post) {
   if (!wpUrl || !wpUser || !wpAppPassword) {
     throw new Error("워드프레스 연결 정보가 없습니다. 설정에서 URL·계정·애플리케이션 비밀번호를 저장하세요.");
   }
-  const base = wpUrl.replace(/\/$/, "");
+  const base = normalizeWpBaseUrl(wpUrl);
   const headers = {
     Authorization: authHeader(wpUser, wpAppPassword),
     "Content-Type": "application/json",

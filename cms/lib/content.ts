@@ -80,10 +80,10 @@ export const SYSTEM_PROMPT = `당신은 한국어 블로그 필자입니다.
 첫 줄은 제목만, 빈 줄 다음부터 본문만 출력하세요.`;
 
 export function parseAiOutput(raw: string) {
-  let text = raw.trim().replace(/^```(?:html|markdown)?\s*/i, "").replace(/```$/, "");
+  const text = raw.trim().replace(/^```(?:html|markdown)?\s*/i, "").replace(/```$/, "");
   const lines = text.split(/\r\n|\n|\r/);
   while (lines.length && lines[0].trim() === "") lines.shift();
-  let title = (lines.shift() || "").replace(/^#+\s*/, "").replace(/^["“”]|["“”]$/g, "").trim();
+  const title = (lines.shift() || "").replace(/^#+\s*/, "").replace(/^["“”]|["“”]$/g, "").trim();
   let content = lines.join("\n").trim();
   content = content.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
   content = content.replace(/\n{2,}/g, "</p>\n<p>");
@@ -94,3 +94,24 @@ export function parseAiOutput(raw: string) {
 export function plainCharCount(html: string) {
   return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().length;
 }
+
+export function plainText(html: string) {
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/** API 없이 본문 앞부분을 요약으로 쓰는 폴백 */
+export function fallbackExcerpt(content: string, maxLen = 120) {
+  const text = plainText(content);
+  if (!text) return "";
+  if (text.length <= maxLen) return text;
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 40 ? cut.slice(0, lastSpace) : cut).trim()}…`;
+}
+
+export const EXCERPT_PROMPT = `당신은 한국어 블로그 편집자입니다.
+주어진 글의 본문만 보고 목록·미리보기에 쓸 요약을 만듭니다.
+규칙:
+- 한두 문장, 한글 기준 80~120자 이내
+- 본문에 없는 사실을 추가하지 마세요
+- 따옴표·머리말·라벨 없이 요약 문장만 출력하세요`;

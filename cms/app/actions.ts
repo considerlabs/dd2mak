@@ -1,11 +1,22 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { generateArticle, pingProvider } from "@/lib/ai";
+import { generateArticle, generateExcerpt, pingProvider } from "@/lib/ai";
 import { clearSession, requireReviewer, requireUser, setSession, verifyPassword } from "@/lib/auth";
 import { CHANNEL_LABEL } from "@/lib/content";
 import { publishToChannels } from "@/lib/channels";
-import { newId, nowIso, readStore, writeStore, type ChannelId, type Post } from "@/lib/store";
+import { buildWriteHref } from "@/lib/pipeline";
+import {
+  newId,
+  nowIso,
+  readStore,
+  writeStore,
+  type ChannelId,
+  type Post,
+  type ResearchBrief,
+} from "@/lib/store";
+import { normalizeWpBaseUrl } from "@/lib/wordpress";
 
 function form(data: FormData, key: string) {
   return String(data.get(key) || "").trim();
@@ -35,6 +46,7 @@ export async function generateAction(data: FormData) {
   if (!category || !keywords) return { error: "카테고리와 키워드를 입력하세요." };
   try {
     const ai = await generateArticle(category, keywords);
+    const excerpt = await generateExcerpt(ai.title, ai.content);
     const store = readStore();
     const existing = postId ? store.posts.find((p) => p.id === postId) : null;
     if (existing) {
@@ -43,10 +55,12 @@ export async function generateAction(data: FormData) {
       }
       existing.title = ai.title;
       existing.content = ai.content;
+      existing.excerpt = excerpt;
       existing.category = category;
       existing.keywords = keywords;
       existing.aiDraft = true;
       existing.updatedAt = nowIso();
+      if (store.pipelineBrief && !existing.research) existing.research = store.pipelineBrief;
       writeStore(store);
       redirect(`/write/${existing.id}`);
     }
@@ -56,7 +70,7 @@ export async function generateAction(data: FormData) {
       content: ai.content,
       category,
       keywords,
-      excerpt: "",
+      excerpt,
       status: "draft",
       authorId: session.id,
       source: "",
@@ -65,6 +79,7 @@ export async function generateAction(data: FormData) {
       aiDraft: true,
       wpPostId: null,
       channelResults: {},
+      research: store.pipelineBrief,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -82,8 +97,7 @@ function saveDraftInternal(
   title: string,
   content: string,
   category: string,
-  keywords: string,
-  excerpt: string
+  keywords: string
 ) {
   if (!title) return { error: "제목을 입력하세요." } as const;
   const store = readStore();
@@ -96,8 +110,8 @@ function saveDraftInternal(
     post.content = content;
     post.category = category;
     post.keywords = keywords;
-    post.excerpt = excerpt;
     post.updatedAt = nowIso();
+    if (store.pipelineBrief && !post.research) post.research = store.pipelineBrief;
     writeStore(store);
     return { id: post.id } as const;
   }
@@ -107,7 +121,7 @@ function saveDraftInternal(
     content,
     category,
     keywords,
-    excerpt,
+    excerpt: "",
     status: "draft",
     authorId: sessionId,
     source: "",
@@ -116,6 +130,7 @@ function saveDraftInternal(
     aiDraft: false,
     wpPostId: null,
     channelResults: {},
+    research: store.pipelineBrief,
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
@@ -132,8 +147,7 @@ export async function saveDraftAction(data: FormData) {
     form(data, "title"),
     form(data, "content"),
     form(data, "category"),
-    form(data, "keywords"),
-    form(data, "excerpt")
+    form(data, "keywords")
   );
   if ("error" in result) return result;
   redirect(`/write/${result.id}`);
@@ -147,8 +161,7 @@ export async function submitAction(data: FormData) {
     form(data, "title"),
     form(data, "content"),
     form(data, "category"),
-    form(data, "keywords"),
-    form(data, "excerpt")
+    form(data, "keywords")
   );
   if ("error" in result) return result;
   const store = readStore();
@@ -156,6 +169,8 @@ export async function submitAction(data: FormData) {
   if (!post || post.authorId !== session.id || post.status !== "draft") {
     return { error: "제출할 수 없는 글입니다." };
   }
+  if (!post.content.trim()) return { error: "본문을 입력하세요." };
+  post.excerpt = await generateExcerpt(post.title, post.content);
   post.status = "pending";
   post.updatedAt = nowIso();
   writeStore(store);
@@ -224,44 +239,120 @@ export async function publishAction(data: FormData) {
 export async function saveSettingsAction(data: FormData): Promise<{ error?: string; message?: string }> {
   await requireReviewer();
   const store = readStore();
-  const provider = form(data, "provider") as typeof store.settings.provider;
-  store.settings.provider = ["anthropic", "openai", "gemini", "cursor"].includes(provider)
-    ? provider
-    : "anthropic";
-  for (const id of ["anthropic", "openai", "gemini", "cursor"]) {
-    const incoming = form(data, `key_${id}`);
-    if (incoming && !incoming.includes("*")) store.settings.keys[id] = incoming;
+  const section = form(data, "section") || "all";
+
+  if (section === "ai" || section === "all") {
+    const provider = form(data, "provider") as typeof store.settings.provider;
+    store.settings.provider = ["anthropic", "openai", "gemini", "cursor"].includes(provider)
+      ? provider
+      : "anthropic";
+    for (const id of ["anthropic", "openai", "gemini", "cursor"]) {
+      const incoming = form(data, `key_${id}`);
+      if (incoming && !incoming.includes("*")) store.settings.keys[id] = incoming;
+    }
   }
-  const wp = store.settings.channels.wordpress;
-  wp.enabled = data.get("ch_wordpress") === "1";
-  wp.url = form(data, "wpUrl") || wp.url;
-  wp.user = form(data, "wpUser") || wp.user;
-  const wpPass = form(data, "wpAppPassword");
-  if (wpPass && !wpPass.includes("*")) wp.appPassword = wpPass;
-  store.settings.wpUrl = wp.url;
-  store.settings.wpUser = wp.user;
-  store.settings.wpAppPassword = wp.appPassword;
 
-  const tistory = store.settings.channels.tistory;
-  tistory.enabled = data.get("ch_tistory") === "1";
-  tistory.blogName = form(data, "tistoryBlogName") || tistory.blogName;
-  const tistoryToken = form(data, "tistoryAccessToken");
-  if (tistoryToken && !tistoryToken.includes("*")) tistory.accessToken = tistoryToken;
+  if (section === "channels" || section === "channel_wordpress" || section === "all") {
+    const wp = store.settings.channels.wordpress;
+    wp.enabled = data.get("ch_wordpress") === "1";
+    const nextWpUrl = form(data, "wpUrl");
+    if (nextWpUrl) wp.url = normalizeWpBaseUrl(nextWpUrl);
+    const nextWpUser = form(data, "wpUser");
+    if (nextWpUser) wp.user = nextWpUser;
+    const wpPass = form(data, "wpAppPassword");
+    if (wpPass && !wpPass.includes("*")) wp.appPassword = wpPass;
+    store.settings.wpUrl = wp.url;
+    store.settings.wpUser = wp.user;
+    store.settings.wpAppPassword = wp.appPassword;
+  }
 
-  const naver = store.settings.channels.naver;
-  naver.enabled = data.get("ch_naver") === "1";
-  naver.blogId = form(data, "naverBlogId") || naver.blogId;
-  const naverToken = form(data, "naverAccessToken");
-  if (naverToken && !naverToken.includes("*")) naver.accessToken = naverToken;
+  if (section === "channels" || section === "channel_tistory" || section === "all") {
+    const tistory = store.settings.channels.tistory;
+    tistory.enabled = data.get("ch_tistory") === "1";
+    if (data.has("tistoryBlogName")) tistory.blogName = form(data, "tistoryBlogName");
+    const tistoryToken = form(data, "tistoryAccessToken");
+    if (tistoryToken && !tistoryToken.includes("*")) tistory.accessToken = tistoryToken;
+  }
+
+  if (section === "channels" || section === "channel_naver" || section === "all") {
+    const naver = store.settings.channels.naver;
+    naver.enabled = data.get("ch_naver") === "1";
+    if (data.has("naverBlogId")) naver.blogId = form(data, "naverBlogId");
+    const naverToken = form(data, "naverAccessToken");
+    if (naverToken && !naverToken.includes("*")) naver.accessToken = naverToken;
+  }
+
+  if (section === "analyze" || section === "all") {
+    const analyze = store.settings.analyze || { naverClientId: "", naverClientSecret: "" };
+    const clientId = form(data, "naverClientId");
+    const clientSecret = form(data, "naverClientSecret");
+    if (clientId && !clientId.includes("*")) analyze.naverClientId = clientId;
+    if (clientSecret && !clientSecret.includes("*")) analyze.naverClientSecret = clientSecret;
+    if (data.has("naverClientId") && !clientId) analyze.naverClientId = "";
+    store.settings.analyze = analyze;
+  }
+
+  if (section === "copilot" || section === "copilot_api" || section === "all") {
+    const seeded = {
+      enabled: true,
+      tenantId: "",
+      clientId: "",
+      clientSecret: "",
+      apiBaseUrl: "",
+      siteName: "",
+      siteUrl: "",
+      categories: "",
+      audience: "",
+      notes: "",
+    };
+    const prev = store.settings.copilot || seeded;
+    const incomingSecret = form(data, "copilotClientSecret");
+    const clientSecret =
+      incomingSecret && !incomingSecret.includes("*") ? incomingSecret : prev.clientSecret || "";
+
+    store.settings.copilot = {
+      enabled: data.has("copilotEnabled") ? data.get("copilotEnabled") === "1" : prev.enabled !== false,
+      tenantId: data.has("copilotTenantId") ? form(data, "copilotTenantId") || prev.tenantId : prev.tenantId,
+      clientId: data.has("copilotClientId") ? form(data, "copilotClientId") || prev.clientId : prev.clientId,
+      clientSecret,
+      apiBaseUrl: prev.apiBaseUrl || process.env.COPILOT_API_URL || "",
+      siteName: data.has("copilotSiteName") ? form(data, "copilotSiteName") || prev.siteName : prev.siteName,
+      siteUrl: data.has("copilotSiteUrl") ? form(data, "copilotSiteUrl") || prev.siteUrl : prev.siteUrl,
+      categories: data.has("copilotCategories")
+        ? form(data, "copilotCategories") || prev.categories
+        : prev.categories,
+      audience: data.has("copilotAudience") ? form(data, "copilotAudience") || prev.audience : prev.audience,
+      notes: data.has("copilotNotes") ? form(data, "copilotNotes") || prev.notes : prev.notes,
+    };
+  }
 
   writeStore(store);
-  return { message: "저장했습니다." };
+  revalidatePath("/settings");
+  revalidatePath("/review");
+  revalidatePath("/", "layout");
+  const messages: Record<string, string> = {
+    ai: "AI 설정을 저장했습니다.",
+    channels: "채널 설정을 저장했습니다.",
+    channel_wordpress: "워드프레스 설정을 저장했습니다.",
+    channel_tistory: "티스토리 설정을 저장했습니다.",
+    channel_naver: "네이버 블로그 설정을 저장했습니다.",
+    analyze: "분석 API 설정을 저장했습니다.",
+    copilot: "Copilot AI 설정을 저장했습니다.",
+    copilot_api: "Copilot AI 키를 저장했습니다.",
+  };
+  return { message: messages[section] || "저장했습니다." };
 }
 
 export async function pingAction(data: FormData) {
   await requireReviewer();
-  const provider = form(data, "provider");
+  const scope = form(data, "scope");
   try {
+    if (scope === "copilot") {
+      const { pingCopilot } = await import("@/lib/copilot");
+      await pingCopilot();
+      return { ok: true, message: "Copilot AI API 연결에 성공했습니다." };
+    }
+    const provider = form(data, "provider");
     await pingProvider(provider);
     return { ok: true, message: "연결에 성공했습니다." };
   } catch (e) {
@@ -275,4 +366,51 @@ export async function writerAction(_prev: { error?: string } | null, data: FormD
   if (intent === "save") return saveDraftAction(data);
   if (intent === "submit") return submitAction(data);
   return { error: "알 수 없는 작업입니다." };
+}
+
+/** Copilot 결과(이미 화면에 있는 값)를 파이프라인에 저장하고 글 작성으로 이동 */
+export async function continueToWriteAction(data: FormData) {
+  await requireUser();
+  const keyword = form(data, "keyword");
+  const fit = form(data, "fit");
+  const angle = form(data, "angle");
+  if (!keyword) return { error: "키워드가 없습니다." };
+  if (fit !== "적합" && fit !== "보통" && fit !== "비추천") {
+    return { error: "적합도 정보가 없습니다. Copilot 진단을 먼저 실행하세요." };
+  }
+  if (fit === "비추천") {
+    return { error: "비추천 키워드입니다. 연관·하위 키워드로 다시 진단해 주세요." };
+  }
+
+  const parseList = (key: string) => {
+    try {
+      const raw = form(data, key);
+      if (!raw) return [] as string[];
+      const v = JSON.parse(raw);
+      return Array.isArray(v) ? v.map(String).slice(0, 8) : [];
+    } catch {
+      return [] as string[];
+    }
+  };
+
+  const brief: ResearchBrief = {
+    keyword,
+    fit,
+    score: Math.max(0, Math.min(100, Number(form(data, "score")) || 0)),
+    summary: form(data, "summary"),
+    reasons: parseList("reasons"),
+    angles: parseList("angles"),
+    caution: parseList("caution"),
+    nextActions: parseList("nextActions"),
+    honeyScore: Number(form(data, "honeyScore")) || undefined,
+    limGrade: form(data, "limGrade") || undefined,
+    competition: form(data, "competition") || undefined,
+    categoryHint: form(data, "categoryHint") || undefined,
+    updatedAt: nowIso(),
+  };
+
+  const store = readStore();
+  store.pipelineBrief = brief;
+  writeStore(store);
+  redirect(buildWriteHref(keyword, { fit: brief.fit, score: brief.score, angle: angle || undefined }));
 }

@@ -13,31 +13,52 @@ export default async function AppShell({ children }: { children: React.ReactNode
   const roleLabel = user?.role === "writer" ? "작성자" : "관리자";
 
   return (
-    <div className="relative flex min-h-screen bg-background text-foreground">
-      <div
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        aria-hidden="true"
-      >
-        <div className="absolute -top-24 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(91,33,182,0.1)_0%,transparent_70%)]" />
-        <div className="absolute top-24 right-0 h-[360px] w-[420px] rounded-full bg-[radial-gradient(ellipse,rgba(124,58,237,0.08)_0%,transparent_70%)]" />
-      </div>
-
-      <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar/95 backdrop-blur-md">
-        <Link href="/" className="flex items-center gap-2.5 border-b border-sidebar-border px-4 py-4">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-[0_8px_20px_-10px_rgba(91,33,182,0.65)]">
+    <div className="flex min-h-screen bg-background text-foreground">
+      <aside className="sticky top-0 z-30 flex h-screen w-[248px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+        <Link href="/" className="flex items-center gap-3 px-5 py-5">
+          <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[var(--shadow-primary)]">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 20h9" />
               <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
             </svg>
           </span>
-          <span className="text-[15px] font-bold tracking-tight">블로그 관리</span>
+          <span>
+            <span className="block text-[15px] font-bold tracking-tight">블로그 관리</span>
+            <span className="block text-[11px] text-muted-foreground">dd2mak CMS</span>
+          </span>
         </Link>
+
+        <form action="/posts" method="get" className="px-4 pb-3">
+          <label className="relative mb-0 block">
+            <span className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </span>
+            <input
+              name="q"
+              type="search"
+              placeholder="글 검색…"
+              className="toolbar-input h-10 w-full bg-[#f8fafc] text-sm placeholder:text-slate-400"
+            />
+          </label>
+        </form>
+
         <SideNav reviewer={reviewer} pendingCount={pendingCount} />
+
         <div className="mt-auto border-t border-sidebar-border px-4 py-4">
-          <p className="text-sm font-medium">{user?.name}</p>
-          <p className="mb-2 text-xs text-muted-foreground">{roleLabel}</p>
+          <div className="mb-3 flex items-center gap-2.5 rounded-xl bg-[#f8fafc] px-2.5 py-2">
+            <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-primary">
+              {user?.name?.slice(0, 1) || "?"}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">{user?.name}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{roleLabel}</p>
+            </div>
+          </div>
           <form action={logoutAction}>
-            <button className="text-xs text-muted-foreground hover:text-primary" type="submit">
+            <button className="text-xs font-medium text-muted-foreground hover:text-primary" type="submit">
               로그아웃
             </button>
           </form>
@@ -45,18 +66,31 @@ export default async function AppShell({ children }: { children: React.ReactNode
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-md">
-          <div className="flex h-14 items-center justify-end px-6">
-            <div className="flex items-center gap-2 rounded-lg border border-border/80 bg-card px-2.5 py-1.5">
-              <span className="flex size-6 items-center justify-center rounded-md bg-muted text-[11px] font-bold text-primary">
-                {user?.name?.slice(0, 1) || "?"}
-              </span>
-              <span className="text-sm">{user?.name}</span>
+        <header className="sticky top-0 z-20 border-b border-border/80 bg-card/90 backdrop-blur-md">
+          <div className="flex h-[64px] items-center justify-between gap-4 px-7">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">콘텐츠</p>
+              <p className="truncate text-sm font-semibold text-foreground">작성 · 검수 · 발행 워크플로</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/write" className="btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+                글 작성
+              </Link>
+              <div className="ml-1 flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5 shadow-[var(--shadow-sm)]">
+                <span className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary">
+                  {user?.name?.slice(0, 1) || "?"}
+                </span>
+                <span className="hidden text-sm font-medium sm:inline">{user?.name}</span>
+              </div>
             </div>
           </div>
         </header>
         <main className="min-w-0 flex-1 overflow-auto">
-          <div className="mx-auto max-w-5xl px-6 py-6">{children}</div>
+          <div className="mx-auto max-w-6xl px-7 py-7">{children}</div>
         </main>
       </div>
     </div>

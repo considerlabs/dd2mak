@@ -1,12 +1,17 @@
 import { CHANNEL_LABEL } from "./content";
 import type { ChannelId, ChannelResult, Post } from "./store";
 import { readStore } from "./store";
-import { publishToWordPress } from "./wordpress";
+import { normalizeWpBaseUrl, publishToWordPress } from "./wordpress";
 
 export function configuredChannels() {
   const { channels } = readStore().settings;
   return {
-    wordpress: Boolean(channels.wordpress.enabled && channels.wordpress.url && channels.wordpress.user && channels.wordpress.appPassword),
+    wordpress: Boolean(
+      channels.wordpress.enabled &&
+        normalizeWpBaseUrl(channels.wordpress.url || "") &&
+        channels.wordpress.user &&
+        channels.wordpress.appPassword
+    ),
     tistory: Boolean(channels.tistory.enabled && channels.tistory.blogName && channels.tistory.accessToken),
     naver: Boolean(channels.naver.enabled && channels.naver.accessToken),
   };
@@ -25,7 +30,7 @@ export async function publishToChannels(post: Post, selected: ChannelId[]) {
     try {
       if (id === "wordpress") {
         const wpId = await publishToWordPress(post);
-        const base = readStore().settings.channels.wordpress.url.replace(/\/$/, "");
+        const base = normalizeWpBaseUrl(readStore().settings.channels.wordpress.url);
         results.wordpress = { ok: true, id: String(wpId), url: `${base}/?p=${wpId}` };
       } else if (id === "tistory") {
         results.tistory = await publishToTistory(post);
