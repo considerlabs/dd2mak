@@ -14,3 +14,5 @@ cms/next-env.d.ts
 
 # Theme packages
 *.zip
+.vercel
+.env*
