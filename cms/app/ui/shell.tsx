@@ -48,7 +48,10 @@ export default async function AppShell({ children }: { children: React.ReactNode
         <SideNav reviewer={reviewer} pendingCount={pendingCount} />
 
         <div className="mt-auto border-t border-sidebar-border px-4 py-4">
-          <div className="mb-3 flex items-center gap-2.5 rounded-xl bg-[#f8fafc] px-2.5 py-2">
+          <Link
+            href="/account"
+            className="mb-3 flex items-center gap-2.5 rounded-xl bg-[#f8fafc] px-2.5 py-2 transition-colors hover:bg-muted"
+          >
             <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-primary">
               {user?.name?.slice(0, 1) || "?"}
             </span>
@@ -56,7 +59,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
               <p className="truncate text-sm font-semibold">{user?.name}</p>
               <p className="truncate text-[11px] text-muted-foreground">{roleLabel}</p>
             </div>
-          </div>
+          </Link>
           <form action={logoutAction}>
             <button className="text-xs font-medium text-muted-foreground hover:text-primary" type="submit">
               로그아웃
@@ -80,12 +83,15 @@ export default async function AppShell({ children }: { children: React.ReactNode
                 </svg>
                 글 작성
               </Link>
-              <div className="ml-1 flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5 shadow-[var(--shadow-sm)]">
+              <Link
+                href="/account"
+                className="ml-1 flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5 shadow-[var(--shadow-sm)] transition-colors hover:bg-muted"
+              >
                 <span className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary">
                   {user?.name?.slice(0, 1) || "?"}
                 </span>
                 <span className="hidden text-sm font-medium sm:inline">{user?.name}</span>
-              </div>
+              </Link>
             </div>
           </div>
         </header>
