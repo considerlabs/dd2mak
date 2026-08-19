@@ -292,12 +292,16 @@ function dd2mak_core_topics() {
 	}
 
 	if ( empty( $topics ) ) {
+		$legacy  = dd2mak_legacy_category_slugs();
 		$parents = get_categories( array(
 			'parent'     => 0,
 			'hide_empty' => false,
 			'exclude'    => array( (int) get_option( 'default_category' ) ),
 		) );
 		foreach ( $parents as $term ) {
+			if ( in_array( $term->slug, $legacy, true ) ) {
+				continue;
+			}
 			$children = get_categories( array(
 				'parent'     => $term->term_id,
 				'hide_empty' => false,

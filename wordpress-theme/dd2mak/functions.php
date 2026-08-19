@@ -1,7 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'DD2MAK_VERSION', '1.0.2' );
+define( 'DD2MAK_VERSION', '1.0.3' );
 
 /**
  * 테마 기본 설정
@@ -64,6 +64,47 @@ require get_template_directory() . '/inc/meta-boxes.php';
 require get_template_directory() . '/inc/customizer.php';
 require get_template_directory() . '/inc/template-functions.php';
 require get_template_directory() . '/inc/easy-writer.php';
+
+/**
+ * 예전 시드 카테고리(메뉴에서 빠진 상위). 글쓰기·주제 목록에서 제외하고 신 카테고리로 보낸다.
+ */
+function dd2mak_legacy_category_redirects() {
+	return array(
+		'welfare' => 'money',
+		'jobs'    => 'work',
+		'finance' => 'money',
+		'leisure' => 'life',
+		'digital' => 'life',
+	);
+}
+
+function dd2mak_legacy_category_slugs() {
+	return array_keys( dd2mak_legacy_category_redirects() );
+}
+
+/**
+ * 예전 상위 카테고리 URL은 새 메뉴 카테고리로 리다이렉트
+ */
+function dd2mak_redirect_legacy_categories() {
+	if ( is_admin() || ! is_category() ) {
+		return;
+	}
+	$term = get_queried_object();
+	if ( ! $term || is_wp_error( $term ) ) {
+		return;
+	}
+	$map = dd2mak_legacy_category_redirects();
+	if ( empty( $map[ $term->slug ] ) ) {
+		return;
+	}
+	$target = get_term_by( 'slug', $map[ $term->slug ], 'category' );
+	if ( ! $target || is_wp_error( $target ) ) {
+		return;
+	}
+	wp_safe_redirect( get_category_link( $target->term_id ), 301 );
+	exit;
+}
+add_action( 'template_redirect', 'dd2mak_redirect_legacy_categories' );
 
 /**
  * 카테고리 아카이브 제목에서 "[카테고리:]" 접두어 제거

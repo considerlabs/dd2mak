@@ -1,6 +1,6 @@
-import type { Post } from "./store";
-import { CATEGORY_TREE, type CategoryNode, type CategoryTree } from "./content";
+import { CATEGORY_TREE, LEGACY_CATEGORY_SLUGS, type CategoryNode, type CategoryTree } from "./content";
 import { readStore } from "./store";
+import type { Post } from "./store";
 
 /** 애플리케이션 비밀번호의 표시용 공백 제거 */
 export function normalizeWpAppPassword(password: string) {
@@ -95,13 +95,16 @@ export async function getWpCategoryTree(): Promise<CategoryTree> {
       rows.push(...((await more.json()) as typeof rows));
     }
     const byId = new Map(rows.filter((c) => c.slug !== "uncategorized").map((c) => [c.id, c]));
+    const legacy = new Set<string>(LEGACY_CATEGORY_SLUGS);
     const parents: CategoryNode[] = [];
     const children: Record<string, CategoryNode[]> = {};
     for (const term of byId.values()) {
       if (term.parent === 0) {
+        if (legacy.has(term.slug)) continue;
         parents.push({ slug: term.slug, name: term.name });
       } else if (byId.has(term.parent)) {
         const parentSlug = byId.get(term.parent)!.slug;
+        if (legacy.has(parentSlug)) continue;
         (children[parentSlug] ||= []).push({ slug: term.slug, name: term.name });
       }
     }

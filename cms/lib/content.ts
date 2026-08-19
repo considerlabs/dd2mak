@@ -1,10 +1,11 @@
 export const CATEGORIES: Record<string, string> = {
-  health: "건강관리",
-  welfare: "복지혜택",
-  jobs: "일자리·재취업",
-  finance: "연금·재무",
-  leisure: "여가·배움",
-  digital: "디지털 생활",
+  health: "건강·병원",
+  money: "돈·연금·복지",
+  care: "돌봄·안전",
+  life: "배움·여가",
+  work: "재취업·일자리",
+  housing: "주거·자산 관리",
+  news: "커뮤니티·소식",
 };
 
 export type CategoryNode = { slug: string; name: string };
@@ -13,44 +14,79 @@ export type CategoryTree = {
   children: Record<string, CategoryNode[]>;
 };
 
+/** 예전 시드 상위 카테고리 — CMS 선택지에서 제외 */
+export const LEGACY_CATEGORY_SLUGS = ["welfare", "jobs", "finance", "leisure", "digital"] as const;
+
 const CATEGORY_CHILDREN: Record<string, CategoryNode[]> = {
   health: [
-    { slug: "fall-prevention", name: "낙상 예방" },
     { slug: "checkup", name: "건강검진" },
-    { slug: "medication", name: "복약 관리" },
+    { slug: "wellness", name: "건강식·운동·수면" },
+    { slug: "national-checkup", name: "국가건강검진" },
+    { slug: "cancer-screening", name: "국가암검진 5종" },
+    { slug: "fall-prevention", name: "낙상 예방" },
+    { slug: "chronic-disease", name: "만성질환 관리" },
+    { slug: "health-insurance", name: "병원비 보장·실비" },
+    { slug: "medication", name: "약 복용·상호작용" },
+    { slug: "dementia", name: "치매검사·예방" },
+    { slug: "herbal-alternative", name: "한방·대체치료" },
   ],
-  welfare: [
+  money: [
+    { slug: "national-pension", name: "국민연금 (노령연금)" },
     { slug: "basic-pension", name: "기초연금" },
-    { slug: "dental", name: "임플란트·틀니" },
-    { slug: "transport", name: "교통·통신" },
-    { slug: "energy-voucher", name: "에너지 바우처" },
+    { slug: "debt-credit", name: "부채 정리·신용회복" },
+    { slug: "insurance-reduction", name: "사회보험료 감면·경감" },
+    { slug: "senior-finance", name: "시니어 금융상품 비교" },
+    { slug: "medical-aid", name: "의료급여·긴급복지지원" },
+    { slug: "home-pension", name: "주택연금·역모기지" },
+    { slug: "inheritance-tax", name: "증여·상속·기부" },
   ],
-  jobs: [
-    { slug: "job-listings", name: "채용정보" },
-    { slug: "senior-jobs", name: "노인일자리" },
-    { slug: "reemployment-edu", name: "재취업 교육" },
+  care: [
+    { slug: "tailored-care", name: "노인맞춤돌봄서비스" },
+    { slug: "longterm-care", name: "노인장기요양보험" },
+    { slug: "elder-abuse", name: "노인학대 예방·신고" },
+    { slug: "live-alone-iot", name: "독거노인 IoT" },
+    { slug: "voice-phishing", name: "보이스피싱 예방" },
+    { slug: "home-care", name: "재가돌봄·주야간보호" },
+    { slug: "disaster", name: "재난약자 지원" },
+    { slug: "dementia-family", name: "치매 가족 지원" },
   ],
-  finance: [
-    { slug: "national-pension", name: "국민연금" },
-    { slug: "retirement-finance", name: "노후 재무" },
+  life: [
+    { slug: "senior-community", name: "경로당·지역 커뮤니티" },
+    { slug: "welfare-center-6", name: "노인복지관 6대 사업" },
+    { slug: "free-culture", name: "무료 여행·문화" },
+    { slug: "digital-learning", name: "시니어 디지털 학습" },
+    { slug: "senior-university", name: "시니어대학·평생교육원" },
+    { slug: "hobby", name: "취미·동호회" },
   ],
-  leisure: [
-    { slug: "lifelong-learning", name: "평생학습" },
-    { slug: "hobby", name: "취미·여가" },
+  work: [
+    { slug: "senior-jobs", name: "노인일자리사업" },
+    { slug: "saeil-center", name: "새일센터·일경험" },
+    { slug: "one-person", name: "시니어 1인 기업" },
+    { slug: "worknet", name: "워크넷 우대 채용관" },
+    { slug: "senior-platform", name: "재취업 플랫폼 비교" },
+    { slug: "return-farm", name: "창업·귀농·귀촌" },
+    { slug: "retirement-irp", name: "퇴직금·IRP 인출" },
   ],
-  digital: [
-    { slug: "kakaotalk", name: "카카오톡" },
-    { slug: "kiosk", name: "키오스크" },
-    { slug: "mobile-banking", name: "모바일뱅킹" },
-    { slug: "gov24", name: "정부24" },
-    { slug: "scam-prevention", name: "사기 예방" },
+  housing: [
+    { slug: "housing-bond", name: "국민주택채권 환급" },
+    { slug: "downsizing", name: "다운사이징 3단계" },
+    { slug: "rental-housing", name: "매입임대·장기전세" },
+    { slug: "silver-town", name: "실버타운·코호트주택" },
+    { slug: "safe-home", name: "안전홈(집수리)" },
+    { slug: "asset-trust", name: "재산관리 신탁·후견" },
+    { slug: "home-pension-guide", name: "주택연금 가이드" },
+  ],
+  news: [
+    { slug: "faq", name: "FAQ 100선" },
+    { slug: "hot-issue", name: "시니어 핫이슈" },
+    { slug: "events", name: "이벤트·설문·퀴즈" },
+    { slug: "policy-briefing", name: "정책 브리핑" },
+    { slug: "card-news", name: "카드뉴스·영상" },
   ],
 };
 
 export const CATEGORY_TREE: CategoryTree = {
-  parents: Object.entries(CATEGORIES)
-    .filter(([slug]) => (CATEGORY_CHILDREN[slug] || []).length > 0)
-    .map(([slug, name]) => ({ slug, name })),
+  parents: Object.entries(CATEGORIES).map(([slug, name]) => ({ slug, name })),
   children: CATEGORY_CHILDREN,
 };
 
@@ -75,7 +111,6 @@ export function categoryLabel(slug: string, tree?: CategoryTree, extras: { slug:
       const hit = kids.find((k) => k.slug === slug);
       if (hit) return `${parent.name} › ${hit.name}`;
     }
-    // tree.parents에서 빠진 상위(하위 없음)도 children 키로 한 번 더 찾음
     for (const [parentSlug, kids] of Object.entries(tree.children)) {
       const hit = kids.find((k) => k.slug === slug);
       if (hit) {
