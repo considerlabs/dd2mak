@@ -83,15 +83,6 @@ export default async function AppShell({ children }: { children: React.ReactNode
                 </svg>
                 글 작성
               </Link>
-              <Link
-                href="/account"
-                className="ml-1 flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5 shadow-[var(--shadow-sm)] transition-colors hover:bg-muted"
-              >
-                <span className="flex size-7 items-center justify-center rounded-full bg-muted text-[11px] font-bold text-primary">
-                  {user?.name?.slice(0, 1) || "?"}
-                </span>
-                <span className="hidden text-sm font-medium sm:inline">{user?.name}</span>
-              </Link>
             </div>
           </div>
         </header>
