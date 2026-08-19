@@ -193,11 +193,30 @@ add_filter( 'wp_nav_menu_objects', 'dd2mak_attach_category_children_to_menu', 20
 function dd2mak_breadcrumb() {
 	$items = array( '<a href="' . esc_url( home_url( '/' ) ) . '">홈</a>' );
 
-	if ( is_singular( 'post' ) ) {
+	if ( is_category() ) {
+		$term = get_queried_object();
+		if ( $term && ! is_wp_error( $term ) && $term->parent ) {
+			$parent = get_term( $term->parent, 'category' );
+			if ( $parent && ! is_wp_error( $parent ) ) {
+				$items[] = '<a href="' . esc_url( get_category_link( $parent->term_id ) ) . '">' . esc_html( $parent->name ) . '</a>';
+			}
+		}
+		if ( $term && ! is_wp_error( $term ) ) {
+			$items[] = esc_html( $term->name );
+		}
+	} elseif ( is_singular( 'post' ) ) {
 		$categories = get_the_category();
 		if ( ! empty( $categories ) ) {
-			$items[] = '<a href="' . esc_url( get_category_link( $categories[0]->term_id ) ) . '">' . esc_html( $categories[0]->name ) . '</a>';
+			$cat = $categories[0];
+			if ( $cat->parent ) {
+				$parent = get_term( $cat->parent, 'category' );
+				if ( $parent && ! is_wp_error( $parent ) ) {
+					$items[] = '<a href="' . esc_url( get_category_link( $parent->term_id ) ) . '">' . esc_html( $parent->name ) . '</a>';
+				}
+			}
+			$items[] = '<a href="' . esc_url( get_category_link( $cat->term_id ) ) . '">' . esc_html( $cat->name ) . '</a>';
 		}
+		$items[] = esc_html( get_the_title() );
 	} elseif ( is_singular( 'job_posting' ) ) {
 		$items[] = '<a href="' . esc_url( get_post_type_archive_link( 'job_posting' ) ) . '">일자리·교육 공고</a>';
 	}

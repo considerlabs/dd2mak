@@ -119,6 +119,7 @@ ul, ol { padding-left: 1.4em; }
   position: sticky;
   top: 0;
   z-index: 100;
+  overflow: visible;
 }
 .site-header__inner {
   max-width: var(--wrap-width);
@@ -129,6 +130,7 @@ ul, ol { padding-left: 1.4em; }
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  overflow: visible;
 }
 .site-title { font-size: 22px; font-weight: 800; color: var(--color-primary); text-decoration: none; }
 
@@ -450,7 +452,40 @@ ul, ol { padding-left: 1.4em; }
    14. 아카이브 / 목록
    ========================================================= */
 .archive-header { max-width: var(--wrap-width); margin: 0 auto; padding: 40px 24px 8px; }
+.archive-title { margin: 0 0 8px; }
+.archive-desc { color: var(--color-text-light); margin: 0; }
 .archive-list { max-width: var(--wrap-width); margin: 0 auto; padding: 24px; }
+
+.category-children {
+  max-width: var(--wrap-width);
+  margin: 0 auto;
+  padding: 0 24px 8px;
+}
+.category-children__list {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+.category-children__list a {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+}
+.category-children__list a:hover,
+.category-children__list a:focus {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-tint);
+}
 
 .pagination { display: flex; gap: 8px; justify-content: center; margin: 40px 0; flex-wrap: wrap; }
 .pagination a, .pagination span {

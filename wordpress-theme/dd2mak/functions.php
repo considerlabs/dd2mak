@@ -1,7 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'DD2MAK_VERSION', '1.0.1' );
+define( 'DD2MAK_VERSION', '1.0.2' );
 
 /**
  * 테마 기본 설정
@@ -64,6 +64,39 @@ require get_template_directory() . '/inc/meta-boxes.php';
 require get_template_directory() . '/inc/customizer.php';
 require get_template_directory() . '/inc/template-functions.php';
 require get_template_directory() . '/inc/easy-writer.php';
+
+/**
+ * 카테고리 아카이브 제목에서 "[카테고리:]" 접두어 제거
+ */
+function dd2mak_archive_title( $title ) {
+	if ( is_category() ) {
+		return single_cat_title( '', false );
+	}
+	return $title;
+}
+add_filter( 'get_the_archive_title', 'dd2mak_archive_title' );
+
+/**
+ * 상위 카테고리 목록에도 하위 카테고리 글이 보이도록 한다.
+ */
+function dd2mak_category_archive_include_children( $query ) {
+	if ( is_admin() || ! $query->is_main_query() || ! $query->is_category() ) {
+		return;
+	}
+	$term_id = (int) $query->get_queried_object_id();
+	if ( ! $term_id ) {
+		return;
+	}
+	$child_ids = get_term_children( $term_id, 'category' );
+	if ( is_wp_error( $child_ids ) || empty( $child_ids ) ) {
+		return;
+	}
+	$ids = array_map( 'intval', array_merge( array( $term_id ), $child_ids ) );
+	$query->set( 'category__in', $ids );
+	$query->set( 'category_name', '' );
+	$query->set( 'cat', '' );
+}
+add_action( 'pre_get_posts', 'dd2mak_category_archive_include_children' );
 
 /**
  * 쉬운 글쓰기와 동일한 주메뉴·하위메뉴. 글 > 카테고리에 등록되어 2단계 선택에 쓰인다.
