@@ -25,7 +25,7 @@ export default function LoginPage() {
             </svg>
           </span>
           <div>
-            <h1 className="text-lg font-bold tracking-tight">블로그 관리</h1>
+            <h1 className="text-lg font-bold tracking-tight">블로그 스튜디오</h1>
             <p className="text-xs text-muted-foreground">글 작성 · 검수 · 발행</p>
           </div>
         </div>

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { logoutAction } from "@/app/actions";
 import { SideNav } from "@/app/ui/side-nav";
 import { getSession } from "@/lib/auth";
 import { readStore } from "@/lib/store";
@@ -23,7 +22,7 @@ export default async function AppShell({ children }: { children: React.ReactNode
             </svg>
           </span>
           <span>
-            <span className="block text-[15px] font-bold tracking-tight">블로그 관리</span>
+            <span className="block text-[15px] font-bold tracking-tight">블로그 스튜디오</span>
             <span className="block text-[11px] text-muted-foreground">dd2mak CMS</span>
           </span>
         </Link>
@@ -50,21 +49,16 @@ export default async function AppShell({ children }: { children: React.ReactNode
         <div className="mt-auto border-t border-sidebar-border px-4 py-4">
           <Link
             href="/account"
-            className="mb-3 flex items-center gap-2.5 rounded-xl bg-[#f8fafc] px-2.5 py-2 transition-colors hover:bg-muted"
+            className="flex items-center gap-2.5 rounded-xl bg-[#f8fafc] px-2.5 py-2 transition-colors hover:bg-muted"
           >
             <span className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-bold text-primary">
               {user?.name?.slice(0, 1) || "?"}
             </span>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{user?.name}</p>
-              <p className="truncate text-[11px] text-muted-foreground">{roleLabel}</p>
+              <p className="truncate text-[11px] text-muted-foreground">{roleLabel} · 내 정보</p>
             </div>
           </Link>
-          <form action={logoutAction}>
-            <button className="text-xs font-medium text-muted-foreground hover:text-primary" type="submit">
-              로그아웃
-            </button>
-          </form>
         </div>
       </aside>
 

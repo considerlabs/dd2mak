@@ -4,8 +4,8 @@ export default function AccountPage() {
   return (
     <>
       <div className="mb-6">
-        <h1 className="page-title">계정</h1>
-        <p className="page-desc">로그인 비밀번호를 관리합니다.</p>
+        <h1 className="page-title">내 정보</h1>
+        <p className="page-desc">비밀번호 변경과 로그아웃을 관리합니다.</p>
       </div>
       <AccountForm />
     </>
