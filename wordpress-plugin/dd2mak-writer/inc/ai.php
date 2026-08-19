@@ -7,7 +7,7 @@ function dd2mak_default_model($provider) {
     $map = array(
         'anthropic' => 'claude-sonnet-4-20250514',
         'openai'    => 'gpt-4o',
-        'gemini'    => 'gemini-2.0-flash',
+        'gemini'    => 'gemini-3.6-flash',
     );
     return isset($map[ $provider ]) ? $map[ $provider ] : '';
 }
