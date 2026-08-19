@@ -6,6 +6,7 @@ import { generateArticle, generateExcerpt, pingProvider } from "@/lib/ai";
 import { clearSession, requireReviewer, requireUser, setSession, verifyPassword } from "@/lib/auth";
 import { CHANNEL_LABEL } from "@/lib/content";
 import { publishToChannels } from "@/lib/channels";
+import { hashPassword } from "@/lib/password";
 import { buildWriteHref } from "@/lib/pipeline";
 import {
   newId,
@@ -341,6 +342,33 @@ export async function saveSettingsAction(data: FormData): Promise<{ error?: stri
     copilot_api: "Copilot AI 키를 저장했습니다.",
   };
   return { message: messages[section] || "저장했습니다." };
+}
+
+export async function changePasswordAction(
+  data: FormData
+): Promise<{ error?: string; message?: string }> {
+  const session = await requireUser();
+  const currentPassword = form(data, "currentPassword");
+  const newPassword = form(data, "newPassword");
+  const confirmPassword = form(data, "confirmPassword");
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "모든 항목을 입력하세요." };
+  }
+  if (newPassword.length < 8) {
+    return { error: "새 비밀번호는 8자 이상이어야 합니다." };
+  }
+  if (newPassword !== confirmPassword) {
+    return { error: "새 비밀번호가 서로 다릅니다." };
+  }
+  const store = await readStore();
+  const user = store.users.find((u) => u.id === session.id);
+  if (!user) return { error: "계정을 찾을 수 없습니다." };
+  if (!verifyPassword(currentPassword, user.passwordHash)) {
+    return { error: "현재 비밀번호가 올바르지 않습니다." };
+  }
+  user.passwordHash = hashPassword(newPassword);
+  await writeStore(store);
+  return { message: "비밀번호를 변경했습니다." };
 }
 
 export async function pingAction(data: FormData) {
