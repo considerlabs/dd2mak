@@ -37,11 +37,6 @@ export default function LoginPage() {
         <label htmlFor="password">비밀번호</label>
         <input id="password" name="password" type="password" className="mb-6" autoComplete="current-password" />
         <SubmitButton>로그인</SubmitButton>
-        <p className="mt-5 rounded-xl bg-[#f8fafc] px-3 py-3 text-xs leading-relaxed text-muted-foreground">
-          writer / writer
-          <br />
-          reviewer / reviewer
-        </p>
       </form>
     </div>
   );
