@@ -8,6 +8,14 @@ import type { ChannelId, Post } from "@/lib/store";
 
 const CHANNELS: ChannelId[] = ["wordpress", "tistory", "naver"];
 
+function friendlyChannelError(error?: string) {
+  if (!error) return "실패";
+  if (/허용하지 않았|로그인 상태가 아닙|인증에 실패|rest_cannot_create|rest_not_logged_in|not allowed|not logged/i.test(error)) {
+    return "워드프레스 인증 실패 — 사이트 로그인 비밀번호가 아닙니다. 설정 → 발행 채널에서 '애플리케이션 비밀번호'를 저장한 뒤 다시 발행하세요.";
+  }
+  return error;
+}
+
 export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelId, boolean> }) {
   const pending = post.status === "pending";
   const [state, action] = useActionState(
@@ -97,7 +105,7 @@ export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelI
             if (!r) return null;
             return (
               <p key={id} className={r.ok ? "text-success" : "text-destructive"}>
-                {CHANNEL_LABEL[id]}: {r.ok ? "성공" : r.error || "실패"}
+                {CHANNEL_LABEL[id]}: {r.ok ? "성공" : friendlyChannelError(r.error)}
                 {r.url ? (
                   <>
                     {" "}
