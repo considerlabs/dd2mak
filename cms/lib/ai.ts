@@ -1,5 +1,5 @@
 import {
-  CATEGORIES,
+  categoryLabel,
   EXCERPT_PROMPT,
   fallbackExcerpt,
   parseAiOutput,
@@ -7,6 +7,7 @@ import {
   SYSTEM_PROMPT,
 } from "./content";
 import { readStore } from "./store";
+import { getWpCategoryTree } from "./wordpress";
 
 function models() {
   return {
@@ -45,7 +46,8 @@ async function complete(system: string, user: string, override?: { provider?: st
 export { complete };
 
 export async function generateArticle(category: string, keywords: string) {
-  const label = CATEGORIES[category] || category;
+  const tree = await getWpCategoryTree();
+  const label = categoryLabel(category, tree);
   const user = `카테고리: ${label}\n키워드: ${keywords}\n위 주제로 글을 작성하세요.`;
   const raw = await complete(SYSTEM_PROMPT, user);
   const parsed = parseAiOutput(raw);

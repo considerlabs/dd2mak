@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { CATEGORIES } from "@/lib/content";
+import { categoryLabel } from "@/lib/content";
 import { readStore } from "@/lib/store";
+import { getWpCategoryTree } from "@/lib/wordpress";
 
 export default async function ReviewListPage() {
   const session = await getSession();
   if (session?.role === "writer") redirect("/write");
   const store = await readStore();
+  const tree = await getWpCategoryTree();
   const posts = store.posts.filter((p) => p.status === "pending");
 
   function authorName(id: string) {
@@ -56,7 +58,7 @@ export default async function ReviewListPage() {
                       </Link>
                     </td>
                     <td className="text-muted-foreground">{authorName(p.authorId)}</td>
-                    <td className="text-muted-foreground">{CATEGORIES[p.category] || p.category}</td>
+                    <td className="text-muted-foreground">{categoryLabel(p.category, tree)}</td>
                     <td className="text-muted-foreground">{p.updatedAt.slice(0, 10)}</td>
                     <td>
                       <Link href={`/review/${p.id}`} className="btn-primary !h-8 !px-3 text-xs">

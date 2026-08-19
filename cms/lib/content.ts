@@ -66,7 +66,27 @@ export const CHANNEL_LABEL: Record<string, string> = {
   naver: "네이버 블로그",
 };
 
-export function categoryLabel(slug: string, extras: { slug: string; name: string }[] = []) {
+export function categoryLabel(slug: string, tree?: CategoryTree, extras: { slug: string; name: string }[] = []) {
+  if (!slug) return "(카테고리 없음)";
+  if (tree) {
+    for (const parent of tree.parents) {
+      if (parent.slug === slug) return parent.name;
+      const kids = tree.children[parent.slug] || [];
+      const hit = kids.find((k) => k.slug === slug);
+      if (hit) return `${parent.name} › ${hit.name}`;
+    }
+    // tree.parents에서 빠진 상위(하위 없음)도 children 키로 한 번 더 찾음
+    for (const [parentSlug, kids] of Object.entries(tree.children)) {
+      const hit = kids.find((k) => k.slug === slug);
+      if (hit) {
+        const parentName =
+          tree.parents.find((p) => p.slug === parentSlug)?.name ||
+          CATEGORIES[parentSlug] ||
+          parentSlug;
+        return `${parentName} › ${hit.name}`;
+      }
+    }
+  }
   if (CATEGORIES[slug]) return CATEGORIES[slug];
   for (const kids of Object.values(CATEGORY_TREE.children)) {
     const hit = kids.find((k) => k.slug === slug);

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { CATEGORIES, STATUS_LABEL } from "@/lib/content";
+import { categoryLabel, STATUS_LABEL } from "@/lib/content";
 import { readStore } from "@/lib/store";
 import { StatusBadge } from "@/app/ui/status-badge";
+import { getWpCategoryTree } from "@/lib/wordpress";
 
 export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
   const session = await getSession();
@@ -10,6 +11,7 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
   const status = typeof params.status === "string" ? params.status : "";
   const q = typeof params.q === "string" ? params.q.trim() : "";
   const store = await readStore();
+  const tree = await getWpCategoryTree();
   const mine = session?.role === "writer";
   let posts = mine ? store.posts.filter((p) => p.authorId === session.id) : store.posts;
   if (status && ["draft", "pending", "publish"].includes(status)) {
@@ -21,7 +23,7 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
       (p) =>
         p.title.toLowerCase().includes(needle) ||
         p.keywords.toLowerCase().includes(needle) ||
-        (CATEGORIES[p.category] || p.category).toLowerCase().includes(needle)
+        categoryLabel(p.category, tree).toLowerCase().includes(needle)
     );
   }
 
@@ -126,7 +128,7 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
                       </Link>
                     </td>
                     {mine ? null : <td className="text-muted-foreground">{authorName(p.authorId)}</td>}
-                    <td className="text-muted-foreground">{CATEGORIES[p.category] || p.category}</td>
+                    <td className="text-muted-foreground">{categoryLabel(p.category, tree)}</td>
                     <td>
                       <StatusBadge status={p.status} label={STATUS_LABEL[p.status]} />
                     </td>

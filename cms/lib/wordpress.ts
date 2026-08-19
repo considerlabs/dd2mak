@@ -127,16 +127,20 @@ export async function publishToWordPress(post: Post) {
 
   const catRes = await fetch(`${base}/wp-json/wp/v2/categories?slug=${encodeURIComponent(post.category)}`, { headers });
   if (!catRes.ok) throw new Error(`카테고리 조회 실패 (${catRes.status})`);
-  const cats = (await catRes.json()) as { id: number }[];
+  const cats = (await catRes.json()) as { id: number; parent: number }[];
   const categoryId = cats[0]?.id;
   if (!categoryId) throw new Error(`워드프레스에 '${post.category}' 카테고리가 없습니다.`);
+  // 하위만 있으면 상위 메뉴·아카이브에도 보이도록 상위 ID를 함께 지정
+  const categoryIds = [categoryId];
+  const parentId = cats[0]?.parent;
+  if (parentId && parentId > 0) categoryIds.push(parentId);
 
   const body = {
     title: post.title,
     content: post.content,
     excerpt: post.excerpt || "",
     status: "publish",
-    categories: [categoryId],
+    categories: categoryIds,
   };
 
   const url = post.wpPostId

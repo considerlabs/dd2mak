@@ -16,7 +16,15 @@ function friendlyChannelError(error?: string) {
   return error;
 }
 
-export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelId, boolean> }) {
+export function ReviewForm({
+  post,
+  ready,
+  categoryDisplay,
+}: {
+  post: Post;
+  ready: Record<ChannelId, boolean>;
+  categoryDisplay?: string;
+}) {
   const pending = post.status === "pending";
   const [state, action] = useActionState(
     async (_p: { error?: string } | null, data: FormData) => {
@@ -72,7 +80,9 @@ export function ReviewForm({ post, ready }: { post: Post; ready: Record<ChannelI
       {state?.error ? <p className="mb-3 text-sm text-destructive">{state.error}</p> : null}
       {"ok" in (state || {}) ? <p className="mb-3 text-sm text-success">저장했습니다.</p> : null}
       <input type="hidden" name="id" value={post.id} />
-      <p className="mb-3 text-sm text-muted-foreground">카테고리: {CATEGORIES[post.category] || post.category}</p>
+      <p className="mb-3 text-sm text-muted-foreground">
+        카테고리: {categoryDisplay || CATEGORIES[post.category] || post.category || "(없음)"}
+      </p>
       <label htmlFor="title">제목</label>
       <input id="title" name="title" className="mb-3" defaultValue={post.title} />
       <div className="mb-3 grid gap-3 md:grid-cols-2">

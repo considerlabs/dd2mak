@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { CATEGORIES, STATUS_LABEL } from "@/lib/content";
+import { categoryLabel, STATUS_LABEL } from "@/lib/content";
 import { readStore } from "@/lib/store";
 import { StatusBadge } from "@/app/ui/status-badge";
+import { getWpCategoryTree } from "@/lib/wordpress";
 
 export default async function DashboardPage() {
   const session = await getSession();
   const store = await readStore();
+  const tree = await getWpCategoryTree();
   const mine = session?.role === "writer";
   const authorId = session?.id;
   const posts = mine && authorId ? store.posts.filter((p) => p.authorId === authorId) : store.posts;
@@ -156,7 +158,7 @@ export default async function DashboardPage() {
                         {p.title || "(제목 없음)"}
                       </Link>
                     </td>
-                    <td className="text-muted-foreground">{CATEGORIES[p.category] || p.category}</td>
+                    <td className="text-muted-foreground">{categoryLabel(p.category, tree)}</td>
                     <td>
                       <StatusBadge status={p.status} label={STATUS_LABEL[p.status]} />
                     </td>
