@@ -123,3 +123,117 @@ function dd2mak_breadcrumb() {
 
 	echo '<nav class="breadcrumb" aria-label="이동 경로">' . implode( ' <span aria-hidden="true">›</span> ', $items ) . '</nav>'; // phpcs:ignore WordPress.Security.EscapeOutput
 }
+
+/**
+ * 핵심 주제 아이콘 (slug 기준)
+ */
+function dd2mak_topic_icon( $slug ) {
+	$map = array(
+		'health'     => '🩺',
+		'money'      => '💰',
+		'care'       => '🤝',
+		'life'       => '🎨',
+		'work'       => '💼',
+		'housing'    => '🏠',
+		'news'       => '📰',
+		'one-person' => '👤',
+		'welfare'    => '🏛️',
+		'jobs'       => '💼',
+		'finance'    => '💰',
+		'leisure'    => '🎨',
+		'digital'    => '📱',
+	);
+	return isset( $map[ $slug ] ) ? $map[ $slug ] : '📌';
+}
+
+/**
+ * 상단 주메뉴와 동일한 핵심 주제 목록.
+ * 1) primary 메뉴의 최상위 카테고리 항목
+ * 2) 없으면 하위가 있는 최상위 카테고리
+ *
+ * @return array<int, array{slug:string,label:string,term_id:int,icon:string}>
+ */
+function dd2mak_core_topics() {
+	static $cache = null;
+	if ( null !== $cache ) {
+		return $cache;
+	}
+
+	$topics   = array();
+	$seen     = array();
+	$locations = get_nav_menu_locations();
+
+	if ( ! empty( $locations['primary'] ) ) {
+		$items = wp_get_nav_menu_items( $locations['primary'] );
+		if ( $items ) {
+			foreach ( $items as $item ) {
+				if ( (int) $item->menu_item_parent !== 0 ) {
+					continue;
+				}
+				if ( 'category' !== $item->object ) {
+					continue;
+				}
+				$term = get_term( (int) $item->object_id, 'category' );
+				if ( ! $term || is_wp_error( $term ) || 'uncategorized' === $term->slug ) {
+					continue;
+				}
+				if ( isset( $seen[ $term->term_id ] ) ) {
+					continue;
+				}
+				$seen[ $term->term_id ] = true;
+				$topics[] = array(
+					'slug'    => $term->slug,
+					'label'   => $item->title ? $item->title : $term->name,
+					'term_id' => (int) $term->term_id,
+					'icon'    => dd2mak_topic_icon( $term->slug ),
+				);
+			}
+		}
+	}
+
+	if ( empty( $topics ) ) {
+		$parents = get_categories( array(
+			'parent'     => 0,
+			'hide_empty' => false,
+			'exclude'    => array( (int) get_option( 'default_category' ) ),
+		) );
+		foreach ( $parents as $term ) {
+			$children = get_categories( array(
+				'parent'     => $term->term_id,
+				'hide_empty' => false,
+				'number'     => 1,
+			) );
+			if ( empty( $children ) ) {
+				continue;
+			}
+			$topics[] = array(
+				'slug'    => $term->slug,
+				'label'   => $term->name,
+				'term_id' => (int) $term->term_id,
+				'icon'    => dd2mak_topic_icon( $term->slug ),
+			);
+		}
+	}
+
+	$cache = $topics;
+	return $cache;
+}
+
+/**
+ * 핵심 주제(및 하위)에 속한 최신 글 쿼리
+ */
+function dd2mak_topic_posts_query( $term_id, $posts_per_page = 3 ) {
+	return new WP_Query( array(
+		'posts_per_page' => $posts_per_page,
+		'post_status'    => 'publish',
+		'tax_query'      => array(
+			array(
+				'taxonomy'         => 'category',
+				'field'            => 'term_id',
+				'terms'            => array( (int) $term_id ),
+				'include_children' => true,
+			),
+		),
+		'ignore_sticky_posts' => true,
+	) );
+}

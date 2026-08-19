@@ -6,18 +6,15 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 get_header();
 
-$topics = array(
-	'health'  => '건강관리',
-	'welfare' => '복지혜택',
-	'jobs'    => '일자리·재취업',
-	'finance' => '연금·재무',
-	'leisure' => '여가·배움',
-	'digital' => '디지털 생활',
-);
+$topic_list = dd2mak_core_topics();
+$topics     = array();
+foreach ( $topic_list as $topic ) {
+	$topics[ $topic['slug'] ] = $topic;
+}
 
 $age      = isset( $_GET['age'] ) ? sanitize_text_field( wp_unslash( $_GET['age'] ) ) : '';
 $region   = isset( $_GET['region'] ) ? sanitize_text_field( wp_unslash( $_GET['region'] ) ) : '';
-$interest = isset( $_GET['interest'] ) && array_key_exists( $_GET['interest'], $topics ) ? sanitize_text_field( wp_unslash( $_GET['interest'] ) ) : '';
+$interest = isset( $_GET['interest'] ) && isset( $topics[ $_GET['interest'] ] ) ? sanitize_text_field( wp_unslash( $_GET['interest'] ) ) : '';
 
 while ( have_posts() ) : the_post();
 	?>
@@ -52,8 +49,9 @@ endwhile;
 				<div class="finder-field">
 					<label for="finder-interest">관심 분야</label>
 					<select id="finder-interest" name="interest">
-						<?php foreach ( $topics as $slug => $label ) : ?>
-							<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $interest, $slug ); ?>><?php echo esc_html( $label ); ?></option>
+						<option value="">선택 안 함</option>
+						<?php foreach ( $topics as $slug => $topic ) : ?>
+							<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $interest, $slug ); ?>><?php echo esc_html( $topic['label'] ); ?></option>
 						<?php endforeach; ?>
 					</select>
 				</div>
@@ -61,11 +59,8 @@ endwhile;
 			</form>
 		</div>
 
-		<?php if ( $interest ) :
-			$result_query = new WP_Query( array(
-				'category_name'  => $interest,
-				'posts_per_page' => 9,
-			) );
+		<?php if ( $interest && isset( $topics[ $interest ] ) ) :
+			$result_query = dd2mak_topic_posts_query( $topics[ $interest ]['term_id'], 9 );
 			?>
 			<div class="finder-results">
 				<div class="finder-results__banner">
@@ -73,7 +68,7 @@ endwhile;
 					$banner = array();
 					if ( $age ) { $banner[] = $age . '대'; }
 					if ( $region ) { $banner[] = $region; }
-					$banner[] = $topics[ $interest ] . ' 관련 정보';
+					$banner[] = $topics[ $interest ]['label'] . ' 관련 정보';
 					echo esc_html( implode( ' · ', $banner ) );
 					?>
 				</div>

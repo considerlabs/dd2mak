@@ -3,6 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 $finder_page = get_page_by_path( 'info-finder' );
 $finder_url  = $finder_page ? get_permalink( $finder_page ) : home_url( '/info-finder/' );
+$topics      = dd2mak_core_topics();
 ?>
 <section class="section">
 	<div class="wrap">
@@ -27,12 +28,10 @@ $finder_url  = $finder_page ? get_permalink( $finder_page ) : home_url( '/info-f
 				<div class="finder-field">
 					<label for="finder-interest">관심 분야</label>
 					<select id="finder-interest" name="interest">
-						<option value="health">건강관리</option>
-						<option value="welfare">복지혜택</option>
-						<option value="jobs">일자리·재취업</option>
-						<option value="finance">연금·재무</option>
-						<option value="leisure">여가·배움</option>
-						<option value="digital">디지털 생활</option>
+						<option value="">선택 안 함</option>
+						<?php foreach ( $topics as $topic ) : ?>
+							<option value="<?php echo esc_attr( $topic['slug'] ); ?>"><?php echo esc_html( $topic['label'] ); ?></option>
+						<?php endforeach; ?>
 					</select>
 				</div>
 				<button type="submit" class="btn btn-primary">정보 찾기</button>
