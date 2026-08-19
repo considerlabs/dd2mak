@@ -33,10 +33,12 @@ type CopilotAuth = {
   apiBaseUrl: string;
 };
 
-function resolveCopilotAuth(): CopilotAuth & {
-  copilot: NonNullable<ReturnType<typeof readStore>["settings"]["copilot"]>;
-} {
-  const copilot = readStore().settings.copilot;
+async function resolveCopilotAuth(): Promise<
+  CopilotAuth & {
+    copilot: NonNullable<Awaited<ReturnType<typeof readStore>>["settings"]["copilot"]>;
+  }
+> {
+  const copilot = (await readStore()).settings.copilot;
   if (!copilot) throw new Error("Copilot AI 설정이 없습니다.");
   return {
     tenantId: (copilot.tenantId || "").trim(),
@@ -60,7 +62,7 @@ function tokenEndpoint(tenantId: string) {
 
 /** 발급 자격증명으로 토큰 발급이 되는지 확인 (엔드포인트 URL 불필요) */
 export async function pingCopilot() {
-  const auth = resolveCopilotAuth();
+  const auth = await resolveCopilotAuth();
   requireCredentials(auth);
 
   const scope = (process.env.COPILOT_API_SCOPE || `api://${auth.clientId}/.default`).trim();
@@ -107,7 +109,7 @@ function overlapScore(keyword: string, categories: string, audience: string) {
 
 function buildLocalAdvice(
   keyword: string,
-  copilot: NonNullable<ReturnType<typeof readStore>["settings"]["copilot"]>,
+  copilot: NonNullable<Awaited<ReturnType<typeof readStore>>["settings"]["copilot"]>,
   kw: Awaited<ReturnType<typeof analyzeKeyword>>
 ): Omit<CopilotAdvice, "analyzedAt" | "raw"> {
   const overlap = overlapScore(keyword, copilot.categories, copilot.audience);
@@ -203,7 +205,7 @@ function parseAdvice(data: unknown): CopilotPayload {
 async function runRemoteCopilot(
   auth: CopilotAuth,
   keyword: string,
-  copilot: NonNullable<ReturnType<typeof readStore>["settings"]["copilot"]>,
+  copilot: NonNullable<Awaited<ReturnType<typeof readStore>>["settings"]["copilot"]>,
   kw: Awaited<ReturnType<typeof analyzeKeyword>>
 ): Promise<CopilotAdvice> {
   const scope = (process.env.COPILOT_API_SCOPE || `api://${auth.clientId}/.default`).trim();
@@ -298,7 +300,7 @@ export async function runCopilot(keywordRaw: string): Promise<CopilotAdvice> {
   const keyword = keywordRaw.trim();
   if (!keyword) throw new Error("분석할 키워드를 입력하세요.");
 
-  const auth = resolveCopilotAuth();
+  const auth = await resolveCopilotAuth();
   const { copilot } = auth;
   if (!copilot.enabled) {
     throw new Error("Copilot AI가 꺼져 있습니다. 설정 > Copilot AI에서 활성화하세요.");

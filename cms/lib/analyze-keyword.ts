@@ -1,5 +1,5 @@
 import { createHmac } from "crypto";
-import { readStore } from "./store";
+import { readStore, type Settings } from "./store";
 
 export type KeywordReport = {
   keyword: string;
@@ -50,16 +50,18 @@ const CATEGORY_RULES: { label: string; words: string[] }[] = [
   { label: "부동산", words: ["아파트", "전세", "월세", "매매", "부동산"] },
 ];
 
-function naverHeaders() {
-  const s = readStore().settings;
+function naverHeaders(s: Settings) {
   const id = s.analyze?.naverClientId || process.env.NAVER_CLIENT_ID || "";
   const secret = s.analyze?.naverClientSecret || process.env.NAVER_CLIENT_SECRET || "";
   if (!id || !secret) return null;
   return { "X-NCP-APIGW-API-KEY-ID": id, "X-NCP-APIGW-API-KEY": secret };
 }
 
-async function naverSearchTotal(query: string, type: "blog" | "cafearticle" | "news" | "webkr") {
-  const headers = naverHeaders();
+async function naverSearchTotal(
+  query: string,
+  type: "blog" | "cafearticle" | "news" | "webkr",
+  headers: Record<string, string> | null
+) {
   if (!headers) return null;
   const url = `https://naverapihub.apigw.ntruss.com/search/v1/${type}?query=${encodeURIComponent(query)}&display=1`;
   const res = await fetch(url, { headers, cache: "no-store" });
@@ -171,13 +173,15 @@ export async function analyzeKeyword(raw: string): Promise<KeywordReport> {
   const keyword = raw.trim().replace(/\s+/g, " ");
   if (!keyword) throw new Error("키워드를 입력하세요.");
   const notes: string[] = [];
-  const hasNaverApi = Boolean(naverHeaders());
+  const settings = (await readStore()).settings;
+  const headers = naverHeaders(settings);
+  const hasNaverApi = Boolean(headers);
 
   const [blogTotal, cafeTotal, newsTotal, webTotal, relatedSuggest] = await Promise.all([
-    naverSearchTotal(keyword, "blog"),
-    naverSearchTotal(keyword, "cafearticle"),
-    naverSearchTotal(keyword, "news"),
-    naverSearchTotal(keyword, "webkr"),
+    naverSearchTotal(keyword, "blog", headers),
+    naverSearchTotal(keyword, "cafearticle", headers),
+    naverSearchTotal(keyword, "news", headers),
+    naverSearchTotal(keyword, "webkr", headers),
     fetchSuggest(keyword),
   ]);
 

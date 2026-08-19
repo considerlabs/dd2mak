@@ -12,7 +12,7 @@ export default async function WritePage({
   const params = await searchParams;
   const keywords = typeof params.keywords === "string" ? params.keywords.trim() : "";
   const angle = typeof params.angle === "string" ? params.angle.trim() : "";
-  const store = readStore();
+  const store = await readStore();
   const brief =
     store.pipelineBrief && (!keywords || store.pipelineBrief.keyword === keywords)
       ? store.pipelineBrief

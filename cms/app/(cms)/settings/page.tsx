@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function SettingsPage() {
   const session = await getSession();
   if (session?.role === "writer") redirect("/write");
-  const { settings } = readStore();
+  const { settings } = await readStore();
   return (
     <>
       <div className="mb-6">

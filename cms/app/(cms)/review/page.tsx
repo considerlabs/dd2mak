@@ -7,7 +7,7 @@ import { readStore } from "@/lib/store";
 export default async function ReviewListPage() {
   const session = await getSession();
   if (session?.role === "writer") redirect("/write");
-  const store = readStore();
+  const store = await readStore();
   const posts = store.posts.filter((p) => p.status === "pending");
 
   function authorName(id: string) {

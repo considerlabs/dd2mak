@@ -22,10 +22,11 @@ function fallbackTree(): CategoryTree {
 
 export async function getWpCategoryTree(): Promise<CategoryTree> {
   const fallback = fallbackTree();
-  const ch = readStore().settings.channels.wordpress;
-  const wpUrl = ch.url || readStore().settings.wpUrl;
-  const wpUser = ch.user || readStore().settings.wpUser;
-  const wpAppPassword = ch.appPassword || readStore().settings.wpAppPassword;
+  const settings = (await readStore()).settings;
+  const ch = settings.channels.wordpress;
+  const wpUrl = ch.url || settings.wpUrl;
+  const wpUser = ch.user || settings.wpUser;
+  const wpAppPassword = ch.appPassword || settings.wpAppPassword;
   if (!wpUrl || !wpUser || !wpAppPassword) return fallback;
   const base = normalizeWpBaseUrl(wpUrl);
   try {
@@ -55,10 +56,11 @@ export async function getWpCategoryTree(): Promise<CategoryTree> {
 }
 
 export async function publishToWordPress(post: Post) {
-  const ch = readStore().settings.channels.wordpress;
-  const wpUrl = ch.url || readStore().settings.wpUrl;
-  const wpUser = ch.user || readStore().settings.wpUser;
-  const wpAppPassword = ch.appPassword || readStore().settings.wpAppPassword;
+  const settings = (await readStore()).settings;
+  const ch = settings.channels.wordpress;
+  const wpUrl = ch.url || settings.wpUrl;
+  const wpUser = ch.user || settings.wpUser;
+  const wpAppPassword = ch.appPassword || settings.wpAppPassword;
   if (!wpUrl || !wpUser || !wpAppPassword) {
     throw new Error("워드프레스 연결 정보가 없습니다. 설정에서 URL·계정·애플리케이션 비밀번호를 저장하세요.");
   }

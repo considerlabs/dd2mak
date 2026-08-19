@@ -9,7 +9,7 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
   const params = await searchParams;
   const status = typeof params.status === "string" ? params.status : "";
   const q = typeof params.q === "string" ? params.q.trim() : "";
-  const store = readStore();
+  const store = await readStore();
   const mine = session?.role === "writer";
   let posts = mine ? store.posts.filter((p) => p.authorId === session.id) : store.posts;
   if (status && ["draft", "pending", "publish"].includes(status)) {

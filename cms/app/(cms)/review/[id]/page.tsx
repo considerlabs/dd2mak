@@ -9,13 +9,13 @@ export default async function ReviewEditPage({ params }: PageProps<"/review/[id]
   const session = await getSession();
   if (session?.role === "writer") redirect("/write");
   const { id } = await params;
-  const post = readStore().posts.find((p) => p.id === id && p.status === "pending");
+  const post = (await readStore()).posts.find((p) => p.id === id && p.status === "pending");
   if (!post) notFound();
   return (
     <>
       <h1 className="page-title mb-2">검수</h1>
       <PipelineSteps current="review" keyword={post.keywords || post.research?.keyword} />
-      <ReviewForm post={post} ready={configuredChannels()} />
+      <ReviewForm post={post} ready={await configuredChannels()} />
     </>
   );
 }

@@ -34,7 +34,7 @@ export async function getSession(): Promise<{ id: string; role: Role } | null> {
   const payload = `${id}.${role}.${exp}`;
   if (sign(payload) !== sig) return null;
   if (Number(exp) < Date.now()) return null;
-  const user = readStore().users.find((u) => u.id === id);
+  const user = (await readStore()).users.find((u) => u.id === id);
   if (!user) return null;
   return { id, role: user.role };
 }

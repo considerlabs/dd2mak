@@ -3,8 +3,8 @@ import type { ChannelId, ChannelResult, Post } from "./store";
 import { readStore } from "./store";
 import { normalizeWpBaseUrl, publishToWordPress } from "./wordpress";
 
-export function configuredChannels() {
-  const { channels } = readStore().settings;
+export async function configuredChannels() {
+  const { channels } = (await readStore()).settings;
   return {
     wordpress: Boolean(
       channels.wordpress.enabled &&
@@ -19,7 +19,7 @@ export function configuredChannels() {
 
 export async function publishToChannels(post: Post, selected: ChannelId[]) {
   const results: Partial<Record<ChannelId, ChannelResult>> = { ...post.channelResults };
-  const ready = configuredChannels();
+  const ready = await configuredChannels();
   if (selected.length === 0) throw new Error("발행할 채널을 하나 이상 선택하세요.");
 
   for (const id of selected) {
@@ -30,7 +30,7 @@ export async function publishToChannels(post: Post, selected: ChannelId[]) {
     try {
       if (id === "wordpress") {
         const wpId = await publishToWordPress(post);
-        const base = normalizeWpBaseUrl(readStore().settings.channels.wordpress.url);
+        const base = normalizeWpBaseUrl((await readStore()).settings.channels.wordpress.url);
         results.wordpress = { ok: true, id: String(wpId), url: `${base}/?p=${wpId}` };
       } else if (id === "tistory") {
         results.tistory = await publishToTistory(post);
@@ -45,7 +45,7 @@ export async function publishToChannels(post: Post, selected: ChannelId[]) {
 }
 
 async function publishToTistory(post: Post): Promise<ChannelResult> {
-  const { blogName, accessToken } = readStore().settings.channels.tistory;
+  const { blogName, accessToken } = (await readStore()).settings.channels.tistory;
   const body = new URLSearchParams({
     access_token: accessToken,
     output: "json",
@@ -73,7 +73,7 @@ async function publishToTistory(post: Post): Promise<ChannelResult> {
 }
 
 async function publishToNaver(post: Post): Promise<ChannelResult> {
-  const { accessToken, blogId } = readStore().settings.channels.naver;
+  const { accessToken, blogId } = (await readStore()).settings.channels.naver;
   const body = new URLSearchParams({
     title: post.title,
     contents: post.content,

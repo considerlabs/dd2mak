@@ -25,7 +25,7 @@ function form(data: FormData, key: string) {
 export async function loginAction(data: FormData) {
   const login = form(data, "login");
   const password = form(data, "password");
-  const user = readStore().users.find((u) => u.login === login);
+  const user = (await readStore()).users.find((u) => u.login === login);
   if (!user || !verifyPassword(password, user.passwordHash)) {
     return { error: "아이디 또는 비밀번호가 올바르지 않습니다." };
   }
@@ -47,7 +47,7 @@ export async function generateAction(data: FormData) {
   try {
     const ai = await generateArticle(category, keywords);
     const excerpt = await generateExcerpt(ai.title, ai.content);
-    const store = readStore();
+    const store = await readStore();
     const existing = postId ? store.posts.find((p) => p.id === postId) : null;
     if (existing) {
       if (existing.authorId !== session.id || existing.status !== "draft") {
@@ -61,7 +61,7 @@ export async function generateAction(data: FormData) {
       existing.aiDraft = true;
       existing.updatedAt = nowIso();
       if (store.pipelineBrief && !existing.research) existing.research = store.pipelineBrief;
-      writeStore(store);
+      await writeStore(store);
       redirect(`/write/${existing.id}`);
     }
     const post: Post = {
@@ -84,14 +84,14 @@ export async function generateAction(data: FormData) {
       updatedAt: nowIso(),
     };
     store.posts.unshift(post);
-    writeStore(store);
+    await writeStore(store);
     redirect(`/write/${post.id}`);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "초안 생성에 실패했습니다." };
   }
 }
 
-function saveDraftInternal(
+async function saveDraftInternal(
   sessionId: string,
   postId: string,
   title: string,
@@ -100,7 +100,7 @@ function saveDraftInternal(
   keywords: string
 ) {
   if (!title) return { error: "제목을 입력하세요." } as const;
-  const store = readStore();
+  const store = await readStore();
   if (postId) {
     const post = store.posts.find((p) => p.id === postId);
     if (!post || post.authorId !== sessionId || post.status !== "draft") {
@@ -112,7 +112,7 @@ function saveDraftInternal(
     post.keywords = keywords;
     post.updatedAt = nowIso();
     if (store.pipelineBrief && !post.research) post.research = store.pipelineBrief;
-    writeStore(store);
+    await writeStore(store);
     return { id: post.id } as const;
   }
   const post: Post = {
@@ -135,13 +135,13 @@ function saveDraftInternal(
     updatedAt: nowIso(),
   };
   store.posts.unshift(post);
-  writeStore(store);
+  await writeStore(store);
   return { id: post.id } as const;
 }
 
 export async function saveDraftAction(data: FormData) {
   const session = await requireUser();
-  const result = saveDraftInternal(
+  const result = await saveDraftInternal(
     session.id,
     form(data, "id"),
     form(data, "title"),
@@ -155,7 +155,7 @@ export async function saveDraftAction(data: FormData) {
 
 export async function submitAction(data: FormData) {
   const session = await requireUser();
-  const result = saveDraftInternal(
+  const result = await saveDraftInternal(
     session.id,
     form(data, "id"),
     form(data, "title"),
@@ -164,7 +164,7 @@ export async function submitAction(data: FormData) {
     form(data, "keywords")
   );
   if ("error" in result) return result;
-  const store = readStore();
+  const store = await readStore();
   const post = store.posts.find((p) => p.id === result.id);
   if (!post || post.authorId !== session.id || post.status !== "draft") {
     return { error: "제출할 수 없는 글입니다." };
@@ -173,14 +173,14 @@ export async function submitAction(data: FormData) {
   post.excerpt = await generateExcerpt(post.title, post.content);
   post.status = "pending";
   post.updatedAt = nowIso();
-  writeStore(store);
+  await writeStore(store);
   redirect("/posts");
 }
 
 export async function saveReviewAction(data: FormData) {
   await requireReviewer();
   const id = form(data, "id");
-  const store = readStore();
+  const store = await readStore();
   const post = store.posts.find((p) => p.id === id);
   if (!post || (post.status !== "pending" && post.status !== "publish")) {
     return { error: "검수할 수 없는 글입니다." };
@@ -195,7 +195,7 @@ export async function saveReviewAction(data: FormData) {
   post.caution = form(data, "caution");
   post.aiDraft = data.get("aiDraft") === "1";
   post.updatedAt = nowIso();
-  writeStore(store);
+  await writeStore(store);
   return { ok: true };
 }
 
@@ -204,7 +204,7 @@ export async function publishAction(data: FormData) {
   const saved = await saveReviewAction(data);
   if (saved && "error" in saved) return saved;
   const id = form(data, "id");
-  const store = readStore();
+  const store = await readStore();
   const post = store.posts.find((p) => p.id === id);
   if (!post || post.status !== "pending") return { error: "발행할 수 없는 글입니다." };
   const selected = data
@@ -224,7 +224,7 @@ export async function publishAction(data: FormData) {
   const ok = selected.filter((id) => results[id]?.ok);
   post.updatedAt = nowIso();
   if (ok.length === 0) {
-    writeStore(store);
+    await writeStore(store);
     return {
       error: selected
         .map((id) => `${CHANNEL_LABEL[id]}: ${results[id]?.error || "실패"}`)
@@ -232,13 +232,13 @@ export async function publishAction(data: FormData) {
     };
   }
   post.status = "publish";
-  writeStore(store);
+  await writeStore(store);
   redirect(`/published/${post.id}`);
 }
 
 export async function saveSettingsAction(data: FormData): Promise<{ error?: string; message?: string }> {
   await requireReviewer();
-  const store = readStore();
+  const store = await readStore();
   const section = form(data, "section") || "all";
 
   if (section === "ai" || section === "all") {
@@ -326,7 +326,7 @@ export async function saveSettingsAction(data: FormData): Promise<{ error?: stri
     };
   }
 
-  writeStore(store);
+  await writeStore(store);
   revalidatePath("/settings");
   revalidatePath("/review");
   revalidatePath("/", "layout");
@@ -409,8 +409,8 @@ export async function continueToWriteAction(data: FormData) {
     updatedAt: nowIso(),
   };
 
-  const store = readStore();
+  const store = await readStore();
   store.pipelineBrief = brief;
-  writeStore(store);
+  await writeStore(store);
   redirect(buildWriteHref(keyword, { fit: brief.fit, score: brief.score, angle: angle || undefined }));
 }

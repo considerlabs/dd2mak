@@ -1,6 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "fs";
-import { tmpdir } from "os";
-import { dirname, join } from "path";
+import { Redis } from "@upstash/redis";
 import { hashPassword } from "./password";
 
 export type Role = "writer" | "reviewer";
@@ -96,10 +94,18 @@ export type Store = {
   pipelineBrief: PipelineBrief;
 };
 
-const PRIMARY_FILE = join(process.cwd(), "data", "store.json");
-const FALLBACK_FILE = join(tmpdir(), "dd2mak-store.json");
-/** Vercel 등 읽기 전용 배포본에 쓰기가 막히면 /tmp로 전환(인스턴스 재시작 시 초기화됨) */
-let activeFile = PRIMARY_FILE;
+const STORE_KEY = "dd2mak:store";
+
+let redisClient: Redis | null = null;
+function redis() {
+  if (!redisClient) {
+    redisClient = new Redis({
+      url: process.env.KV_REST_API_URL!,
+      token: process.env.KV_REST_API_TOKEN!,
+    });
+  }
+  return redisClient;
+}
 
 function normalizeStoredWpUrl(url: string) {
   return url
@@ -210,30 +216,18 @@ function migrate(raw: Partial<Store> & { settings?: Partial<Settings> }): Store 
   return data;
 }
 
-export function readStore(): Store {
-  const file = existsSync(activeFile) ? activeFile : existsSync(FALLBACK_FILE) ? FALLBACK_FILE : activeFile;
-  if (!existsSync(file)) {
+export async function readStore(): Promise<Store> {
+  const raw = await redis().get<Partial<Store>>(STORE_KEY);
+  if (!raw) {
     const data = seed();
-    writeStore(data);
+    await writeStore(data);
     return data;
   }
-  return migrate(JSON.parse(readFileSync(file, "utf8")) as Partial<Store>);
+  return migrate(raw);
 }
 
-function writeToFile(file: string, data: Store) {
-  mkdirSync(dirname(file), { recursive: true });
-  const tmp = file + ".tmp";
-  writeFileSync(tmp, JSON.stringify(data, null, 2));
-  renameSync(tmp, file);
-}
-
-export function writeStore(data: Store) {
-  try {
-    writeToFile(activeFile, data);
-  } catch {
-    activeFile = FALLBACK_FILE;
-    writeToFile(activeFile, data);
-  }
+export async function writeStore(data: Store) {
+  await redis().set(STORE_KEY, data);
 }
 
 export function nowIso() {

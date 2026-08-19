@@ -18,8 +18,8 @@ function models() {
 
 type Provider = "anthropic" | "openai" | "gemini";
 
-function resolveProvider(override?: { provider?: string; key?: string }): { provider: Provider; key: string } {
-  const settings = readStore().settings;
+async function resolveProvider(override?: { provider?: string; key?: string }): Promise<{ provider: Provider; key: string }> {
+  const settings = (await readStore()).settings;
   const provider = (override?.provider || settings.provider) as string;
   if (provider === "cursor") {
     throw new Error("Cursor는 이 서버에서 초안 생성에 쓸 수 없습니다. Anthropic, OpenAI, Gemini 중 하나를 선택하세요.");
@@ -35,7 +35,7 @@ function resolveProvider(override?: { provider?: string; key?: string }): { prov
 }
 
 async function complete(system: string, user: string, override?: { provider?: string; key?: string }) {
-  const { provider, key } = resolveProvider(override);
+  const { provider, key } = await resolveProvider(override);
   if (provider === "anthropic") return callAnthropic(key, user, system);
   if (provider === "openai") return callOpenAI(key, user, system);
   if (provider === "gemini") return callGemini(key, user, system);
@@ -69,7 +69,7 @@ export async function generateExcerpt(title: string, content: string) {
 
 export async function pingProvider(provider: string, keyOverride?: string) {
   if (provider === "cursor") throw new Error("Cursor는 이 서버에서 연결 확인할 수 없습니다.");
-  const key = (keyOverride || readStore().settings.keys[provider] || "").trim();
+  const key = (keyOverride || (await readStore()).settings.keys[provider] || "").trim();
   if (!key) throw new Error("키가 없습니다.");
   let res: Response;
   if (provider === "anthropic") {

@@ -6,7 +6,7 @@ import { readStore } from "@/lib/store";
 
 export default async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  const store = readStore();
+  const store = await readStore();
   const user = session ? store.users.find((u) => u.id === session.id) : null;
   const reviewer = Boolean(user && user.role !== "writer");
   const pendingCount = store.posts.filter((p) => p.status === "pending").length;

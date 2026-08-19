@@ -11,7 +11,7 @@ export default async function CopilotPage({
 }) {
   const { q } = await searchParams;
   const keyword = typeof q === "string" ? q.trim() : "";
-  const copilot = readStore().settings.copilot;
+  const copilot = (await readStore()).settings.copilot;
   const hasCopilotKey = Boolean(
     (copilot?.tenantId || "").trim() && (copilot?.clientId || "").trim() && (copilot?.clientSecret || "").trim()
   );

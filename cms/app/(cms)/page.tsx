@@ -6,7 +6,7 @@ import { StatusBadge } from "@/app/ui/status-badge";
 
 export default async function DashboardPage() {
   const session = await getSession();
-  const store = readStore();
+  const store = await readStore();
   const mine = session?.role === "writer";
   const authorId = session?.id;
   const posts = mine && authorId ? store.posts.filter((p) => p.authorId === authorId) : store.posts;
