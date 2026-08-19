@@ -1,10 +1,12 @@
 # 인수인계 문서 v2.1 — dd2mak
 
-작성일: 2026-08-18
+작성일: 2026-08-18 (최종 업데이트: 2026-08-19 — §2, §5.2 체크리스트 전부 반영)
 대상: 이 프로젝트를 이어받아 운영·개발할 담당자
 이전 문서: `docs/handover-v2.0.md` (v2.0, 2026-08-17, CMS 화면 개편)
 
 이 문서는 v2.0 이후 변경분만 다룬다. 역할 분리·폴더 구조·로컬 실행 등 기본 내용은 v2.0을 먼저 읽을 것.
+**2026-08-19 세션에서 §5.2에 남아 있던 미해결 항목(스토리지 DB화·기본 비밀번호·Copilot 연결·Deployment
+Protection)을 전부 해결했다.** 아래 §2·§5는 그 결과를 반영해 새로 썼고, §7에 이번 세션 변경 내역을 정리했다.
 
 ---
 
@@ -17,12 +19,13 @@ CMS에 **콘텐츠 기획 파이프라인**(키워드 분석 → Copilot 적합�
 ## 2. 지금 당장 알아야 할 것
 
 1. **CMS 로컬 포트가 3010 → 3030으로 바뀌었다.** `cms/package.json`의 `dev`/`start` 스크립트가 `-p 3030`으로 고정됨. v2.0 문서의 `http://localhost:3010` 안내는 이제 틀렸다.
-2. **JSON 파일 스토리지는 Vercel(서버리스)에서 영구 저장이 안 된다.** `cms/data/store.json`은 배포 번들에 없고(`.gitignore` 대상), 서버리스 함수는 배포 루트가 읽기 전용이라 기존 코드 그대로면 첫 쓰기 작업(로그인 유저 시드 포함)에서 크래시가 난다.
-   - 이번 세션에 `cms/lib/store.ts`에 **`/tmp` 폴백**을 추가해 크래시는 막았다(`writeStore`가 실패하면 `os.tmpdir()`로 전환).
-   - 단, `/tmp`는 서버리스 인스턴스가 재시작(콜드스타트)되면 초기화된다. **즉 Vercel 배포판은 글·설정이 언제든 초기화될 수 있는 "데모" 상태다.** 실제 운영으로 쓰려면 DB(Vercel Postgres/KV 등)로 옮기는 작업이 필수이며, v2.0 §9에 있던 "DB로 옮기는 것을 검토" 항목이 이제 **필수**로 격상됐다.
-3. **Vercel 프로젝트가 새로 생성돼 있었고 루트 디렉터리가 잘못 설정돼 있었다.** 이번 세션에서 발견해 고쳤다(§5 참고). 대시보드에서 임의로 다시 바꾸지 말 것.
-4. **Vercel 프로덕션 환경변수: `NAVER_CLIENT_ID`/`NAVER_CLIENT_SECRET`는 설정 완료.** `WP_URL`/`WP_USER`/`WP_APP_PASSWORD`, AI 키, `COPILOT_*`는 아직 미설정. 지금 배포판은 로그인(시드 계정 `writer`/`writer`, `reviewer`/`reviewer`, `admin`/`admin`)과 키워드 분석(네이버 문서량 조회)까지 확인했고, 실제 발행·AI 초안·Copilot 연동은 값을 넣기 전까지 동작하지 않는다.
+2. **스토리지는 더 이상 파일이 아니라 Upstash Redis다 (2026-08-19 해결).** `cms/lib/store.ts`가 파일(`data/store.json` + `/tmp` 폴백) 대신 Redis 단일 키(`dd2mak:store`)를 쓴다. `readStore`/`writeStore`는 이제 async이고, 콜드스타트로 데이터가 사라지던 문제는 완전히 해결됐다. 자세한 내용은 §7.1 참고.
+   - **중요: 로컬 개발과 프로덕션이 같은 Redis 인스턴스·같은 키를 공유한다.** `vercel integration add`를 환경 제한 없이(전체 환경) 실행해서 그렇게 됐다. 로컬 `npm run dev`에서 글을 쓰거나 설정을 바꾸면 실제 서비스(`dd2mak.vercel.app`)에 그대로 반영된다. 분리하려면 preview/development 전용 Upstash DB를 하나 더 만들어 연결해야 한다.
+3. **Vercel 프로젝트가 새로 생성돼 있었고 루트 디렉터리가 잘못 설정돼 있었다.** 지난 세션(2026-08-18)에서 발견해 고쳤다(§5 참고). 대시보드에서 임의로 다시 바꾸지 말 것.
+4. **Vercel 프로덕션 환경변수는 이제 다 채워져 있다.** `NAVER_CLIENT_ID`/`NAVER_CLIENT_SECRET`, `WP_URL`/`WP_USER`/`WP_APP_PASSWORD`, `KV_REST_API_URL`/`KV_REST_API_TOKEN`(Redis) 전부 설정 완료. `COPILOT_*`는 여전히 Vercel 환경변수로는 없지만, **Copilot 테넌트 ID·Client ID·Client Secret은 CMS 설정 화면(`/settings` > Copilot AI)에 직접 저장하는 방식**이라 이게 정상이다 — 자세한 내용과 연결 확인 방법은 §7.3 참고.
 5. **네이버 검색 API는 구 오픈API가 아니라 NCP API 허브 방식이다.** §3 하단 주의 참고 — 엔드포인트·헤더가 다르다.
+6. **기본 비밀번호(`writer`/`reviewer`/`admin`)는 각 계정이 로그인해서 직접 바꿔야 한다.** 좌측 하단 사용자 표시를 누르면 `/account`에서 비밀번호를 바꿀 수 있다(§7.2). 코드 수정만으로는 이미 시드된 계정의 비밀번호가 바뀌지 않으니, **세 계정 모두 실제로 로그인해서 바꿨는지 반드시 확인할 것.**
+7. **Vercel Deployment Protection은 꺼져 있다 (2026-08-19 확인).** CMS 자체 로그인 화면이 유일한 게이트다. `curl -D - https://dd2mak.vercel.app/`로 확인 시 Vercel SSO 인터스티셜 없이 곧장 `/login`으로 307 리다이렉트되는 걸로 확인했다.
 
 ---
 
@@ -100,20 +103,18 @@ CMS에 **콘텐츠 기획 파이프라인**(키워드 분석 → Copilot 적합�
 
 - Vercel 프로젝트 `dd2mak`(팀 `briank-projects`)가 GitHub `considerlabs/dd2mak` 저장소에 연결된 상태로 **이미 존재**했다(이번 세션 시작 직전 생성된 것으로 추정). 그런데 **Root Directory가 저장소 루트(`.`)로 잘못 설정**돼 있어 `next build`가 아예 실행되지 않고(91ms만에 "완료") `https://dd2mak.vercel.app`이 404였다.
 - Vercel REST API로 프로젝트 설정을 고쳤다: **Root Directory = `cms`, Framework = Next.js.** 이제 GitHub `main`에 푸시하면 자동으로 `cms/`를 빌드해 배포한다.
-- 로컬 `cms/`를 이 프로젝트에 `vercel link`로 연결했다(`cms/.vercel/project.json` 생성, Git에는 안 올라감).
+- 로컬 저장소를 이 프로젝트에 `vercel link`로 연결했다(`.vercel/project.json`은 **저장소 루트**에 생성됨, `cms/` 안이 아님 — Git에는 안 올라감). 그래서 `vercel` CLI 명령은 `cms/`가 아니라 **저장소 루트**에서 실행해야 한다(§5.3 정정).
 - `cms/lib/store.ts`에 §2-2의 `/tmp` 폴백을 추가해 최소한 크래시 없이 뜨도록 했다.
 - 위 변경분을 커밋하고 `vercel --prod`로 수동 배포 + `git push`로 GitHub 연동 배포 경로도 함께 살렸다.
 
-### 5.2 다음 담당자가 반드시 할 일
+### 5.2 다음 담당자가 반드시 할 일 (2026-08-19: 전부 완료)
 
 - [x] `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` — 완료(2026-08-18). NCP API 허브(`console.ncloud.com/naver-api-hub`) 발급 키이며 블로그·카페·뉴스·웹문서 4개 API 모두 활성화 확인함.
-- [ ] **나머지 환경변수 설정** (Vercel 대시보드 → dd2mak 프로젝트 → Settings → Environment Variables, 또는 `vercel env add`):
-  - `WP_URL`, `WP_USER`, `WP_APP_PASSWORD` — 운영 워드프레스 Application Password
-  - `COPILOT_TENANT_ID`, `COPILOT_CLIENT_ID`, `COPILOT_CLIENT_SECRET`, 필요 시 `COPILOT_API_URL`/`COPILOT_TOKEN_URL`/`COPILOT_API_SCOPE`
-  - AI 초안용 provider 키는 지금 구조상 `설정` 화면에서 저장하는 방식이라 환경변수로는 시드값만 채워짐 — **`/tmp` 폴백 특성상 화면에서 저장해도 콜드스타트 후 사라질 수 있다.** 영구 저장하려면 DB 마이그레이션이 선행돼야 함.
-- [ ] **스토리지를 DB로 이전.** 후보: Vercel Postgres, Vercel KV, 또는 기존 로컬 운영과 동일하게 별도 VM/컨테이너에 Node 서버로 배포(파일시스템 영구화). Vercel 서버리스를 계속 쓸 거면 DB 없이는 실운영 불가.
-- [ ] 로그인 기본 비밀번호(`writer`/`admin`) 교체 — v2.0에서도 지적된 항목, Vercel 배포판은 공개 URL이라 더 시급함.
-- [ ] Vercel 배포 보호(Deployment Protection)나 인증 여부 확인 — 지금은 CMS 로그인 화면 자체가 게이트지만, 시드 계정 비밀번호가 기본값이라 사실상 공개된 것과 같다.
+- [x] `WP_URL`, `WP_USER`, `WP_APP_PASSWORD` — 완료. Vercel 프로덕션 환경변수로 설정돼 있음(§2-4).
+- [x] **Copilot AI API 연결** — 완료(2026-08-19). 환경변수가 아니라 `/settings` > Copilot AI 화면에 테넌트 ID·Client ID·Client Secret을 직접 저장하는 방식이고, 실제 토큰 발급까지 확인함. 트러블슈팅 기록은 §7.3.
+- [x] **스토리지를 DB로 이전** — 완료(2026-08-19). Upstash Redis로 이전, 콜드스타트에도 데이터가 안전함. §7.1.
+- [x] 로그인 기본 비밀번호 교체 — 완료(2026-08-19). 셀프서비스 비밀번호 변경 화면(`/account`)을 새로 만들었고, 세 계정 모두 이 화면에서 바꿈. §7.2.
+- [x] Vercel 배포 보호(Deployment Protection) 확인 — 완료(2026-08-19). 대시보드에서 꺼져 있는 상태로 확인(§2-7). CMS 로그인 화면이 유일한 게이트이고, 기본 비밀번호도 이미 교체됐다.
 
 ### 5.3 로컬 개발 명령 (포트 변경 반영)
 
@@ -123,16 +124,55 @@ npm install
 npm run dev     # http://localhost:3030 (package.json에 -p 3030 고정)
 ```
 
-수동 배포가 필요하면:
+수동 배포가 필요하면 **저장소 루트**에서(`cms/` 아님, `.vercel/project.json`이 루트에 있다):
 
 ```bash
-cd cms
-vercel --prod   # 이미 연결됨 (.vercel/project.json), 로그인은 vercel login 필요
+vercel --prod   # 이미 연결됨(루트 .vercel/project.json), 로그인은 vercel login 필요
+```
+
+환경변수를 로컬로 받아오려면(로컬 `.env.local`은 `cms/.env.local`이어야 Next.js가 읽는다):
+
+```bash
+vercel env pull cms/.env.local --yes
 ```
 
 ---
 
-## 6. 관련 문서
+## 7. 이번 세션 변경 내역 (2026-08-19)
+
+### 7.1 스토리지 → Upstash Redis
+
+- `cms/lib/store.ts`: 파일(`data/store.json` + `/tmp` 폴백) 대신 **Upstash Redis 단일 키(`dd2mak:store`)**로 완전히 교체. `readStore`/`writeStore`가 async로 바뀌어, 호출부 20개 파일의 동기 호출을 전부 `await`로 전환했다(`app/actions.ts`, `lib/auth.ts`, `lib/channels.ts`, `lib/wordpress.ts`, `lib/ai.ts`, `lib/copilot.ts`, `lib/analyze-keyword.ts`, 각 `page.tsx` 등).
+- **프로비저닝**: Vercel Marketplace로 설치했다. `vercel integration add upstash/upstash-kv` (마켓플레이스 약관 동의가 브라우저에서 한 번 필요했음 — `vercel.com/briank-projects/~/integrations/accept-terms/upstash`). 프로젝트에 **전체 환경(production/preview/development)** 으로 연결됨.
+- **환경변수**: `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `KV_REST_API_READ_ONLY_TOKEN`, `KV_URL`, `REDIS_URL` — 이름이 `@vercel/kv` 시절 규칙을 따른다(`UPSTASH_REDIS_REST_URL`이 아님). `Redis.fromEnv()`가 아니라 `new Redis({ url: KV_REST_API_URL, token: KV_REST_API_TOKEN })`으로 직접 생성한 이유이기도 함.
+- **주의(§2-2 반복)**: 로컬 개발과 프로덕션이 같은 Redis를 공유한다. 분리하려면 development 전용 Upstash 리소스를 하나 더 만들어 `vercel integration add upstash/upstash-kv --environment development`로 연결해야 한다.
+- 커밋: `e411681`.
+
+### 7.2 계정별 비밀번호 변경 — `/account`
+
+- `seed()`의 기본 비밀번호(`writer`/`reviewer`/`admin`)가 공개 URL에 그대로 떠 있던 문제 해결.
+- `app/actions.ts`의 `changePasswordAction` — 현재 비밀번호 확인 후 새 비밀번호(8자 이상)로 교체.
+- `app/(cms)/account/page.tsx` + `app/ui/account-form.tsx` — 새 페이지. `/settings`는 `reviewerOnly`라 writer 역할은 못 들어가므로, 역할 무관하게 접근 가능한 별도 페이지로 뒀다.
+- 진입점은 **좌측 하단 사용자 표시(아바타+이름) 클릭** 하나뿐이다. 사이드바에 별도 메뉴는 없다(처음엔 만들었다가 중복이라 제거함). 헤더 우측 상단의 사용자 표시도 좌측과 중복이라 제거했다.
+- 커밋: `d7433b9`, `6150fa2`, `3552f91`.
+
+### 7.3 Copilot AI API 연결 트러블슈팅
+
+연결이 안 될 때 마주친 두 가지 Azure/Entra ID 오류와 해결법. 다음에 같은 앱을 다시 설정하거나 다른 테넌트에 옮길 때 참고.
+
+1. **`AADSTS7000215: Invalid client secret provided`** — Entra ID에서 클라이언트 암호를 만들면 **Secret ID**(GUID)와 **Value**(실제 값) 두 개가 같이 보이는데, ID를 잘못 복사해서 저장하면 이 에러가 난다. 해결: 인증서 및 암호(Certificates & secrets)에서 새 암호를 만들고 **Value**를 복사해 저장(Value는 생성 직후에만 보임).
+2. **`AADSTS500011: The resource principal named api://{clientId} was not found`** — 앱이 자기 자신을 리소스로 쓰는데(`api://{clientId}/.default`, `cms/lib/copilot.ts`의 기본 스코프) 이 앱에 **API가 노출(Expose an API)** 돼 있지 않으면 나는 에러. 해결: Entra ID → 앱 등록 → 해당 앱 → **API 노출(Expose an API)** → Application ID URI를 기본값(`api://{clientId}`) 그대로 추가·저장.
+   - 실제 API 권한이 토큰에 실리게 하려면 **앱 역할(App roles)** 을 만들고 **API 권한(API permissions)** 에서 애플리케이션 권한으로 추가한 뒤 **관리자 동의**까지 해야 하지만, 지금은 `COPILOT_API_URL`(실제 백엔드)이 아직 없어 토큰 발급 확인 단계까지만 필요했다.
+- 검증: `pingCopilot()`(`cms/lib/copilot.ts`)을 직접 호출해 토큰 발급 성공까지 확인함. 설정 화면의 "연결 확인" 버튼과 동일한 로직이다.
+- **`COPILOT_API_URL`은 여전히 미설정**이라 키워드 적합도 진단은 로컬 규칙 기반 폴백(`buildLocalAdvice`)으로 동작한다. 실제 Copilot 백엔드가 생기면 그 URL을 `/settings`에 등록하면 된다.
+
+### 7.4 Deployment Protection
+
+Vercel 대시보드(`vercel.com/briank-projects/dd2mak/settings/deployment-protection`)에서 껐다. CLI로는 조회·설정이 안 되는 대시보드 전용 설정이라 `curl -D - https://dd2mak.vercel.app/`로 간접 확인했다 — Vercel SSO 인터스티셜 없이 곧장 CMS 자체 `/login`으로 307 리다이렉트되면 정상.
+
+---
+
+## 8. 관련 문서
 
 - `docs/handover-v2.0.md` — CMS 대시보드 UI 개편 이력 (색·레이아웃)
 - `docs/handover.md` — v1.0 워드프레스 테마 세션
