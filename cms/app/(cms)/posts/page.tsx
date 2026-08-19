@@ -104,6 +104,7 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-14">No</th>
                 <th>제목</th>
                 {mine ? null : <th>작성자</th>}
                 <th>카테고리</th>
@@ -115,13 +116,14 @@ export default async function PostsPage({ searchParams }: PageProps<"/posts">) {
             <tbody>
               {posts.length === 0 ? (
                 <tr>
-                  <td className="!py-12 text-center text-muted-foreground" colSpan={mine ? 5 : 6}>
+                  <td className="!py-12 text-center text-muted-foreground" colSpan={mine ? 6 : 7}>
                     {q ? "검색 결과가 없습니다." : "글이 없습니다."}
                   </td>
                 </tr>
               ) : (
-                posts.map((p) => (
+                posts.map((p, index) => (
                   <tr key={p.id}>
+                    <td className="text-muted-foreground tabular-nums">{index + 1}</td>
                     <td>
                       <Link className="font-semibold hover:text-primary" href={href(p.id, p.status)}>
                         {p.title || "(제목 없음)"}

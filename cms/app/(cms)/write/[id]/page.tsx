@@ -17,7 +17,7 @@ export default async function WriteEditPage({ params }: PageProps<"/write/[id]">
     <>
       <h1 className="page-title mb-2">{readOnly ? "글 보기" : "글 수정"}</h1>
       <PipelineSteps current={readOnly ? "review" : "write"} keyword={post.keywords || post.research?.keyword} />
-      <WriteForm post={post} readOnly={readOnly} tree={tree} brief={post.research} />
+      <WriteForm key={post.id} post={post} readOnly={readOnly} tree={tree} />
     </>
   );
 }

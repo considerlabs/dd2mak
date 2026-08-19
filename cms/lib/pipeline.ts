@@ -4,13 +4,10 @@ export type { ResearchBrief };
 export type PipelineFit = ResearchBrief["fit"];
 
 export function buildWriteHref(keyword: string, opts?: { fit?: string; score?: number; angle?: string }) {
-  const params = new URLSearchParams();
-  params.set("keywords", keyword);
-  params.set("from", "pipeline");
-  if (opts?.fit) params.set("fit", opts.fit);
-  if (opts?.score != null) params.set("score", String(opts.score));
-  if (opts?.angle) params.set("angle", opts.angle);
-  return `/write?${params.toString()}`;
+  // 호환용: 새 글 작성은 /write 고정. 파이프라인 이어가기는 continueToWriteAction이 초안을 만든다.
+  void keyword;
+  void opts;
+  return "/write";
 }
 
 export function buildCopilotHref(keyword: string) {

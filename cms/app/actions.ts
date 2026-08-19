@@ -7,7 +7,6 @@ import { clearSession, requireReviewer, requireUser, setSession, verifyPassword 
 import { CHANNEL_LABEL } from "@/lib/content";
 import { publishToChannels } from "@/lib/channels";
 import { hashPassword } from "@/lib/password";
-import { buildWriteHref } from "@/lib/pipeline";
 import {
   newId,
   nowIso,
@@ -49,6 +48,7 @@ export async function generateAction(data: FormData) {
     const ai = await generateArticle(category, keywords);
     const excerpt = await generateExcerpt(ai.title, ai.content);
     const store = await readStore();
+    store.pipelineBrief = null;
     const existing = postId ? store.posts.find((p) => p.id === postId) : null;
     if (existing) {
       if (existing.authorId !== session.id || existing.status !== "draft") {
@@ -61,7 +61,6 @@ export async function generateAction(data: FormData) {
       existing.keywords = keywords;
       existing.aiDraft = true;
       existing.updatedAt = nowIso();
-      if (store.pipelineBrief && !existing.research) existing.research = store.pipelineBrief;
       await writeStore(store);
       redirect(`/write/${existing.id}`);
     }
@@ -80,7 +79,7 @@ export async function generateAction(data: FormData) {
       aiDraft: true,
       wpPostId: null,
       channelResults: {},
-      research: store.pipelineBrief,
+      research: null,
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
@@ -102,6 +101,7 @@ async function saveDraftInternal(
 ) {
   if (!title) return { error: "제목을 입력하세요." } as const;
   const store = await readStore();
+  store.pipelineBrief = null;
   if (postId) {
     const post = store.posts.find((p) => p.id === postId);
     if (!post || post.authorId !== sessionId || post.status !== "draft") {
@@ -112,7 +112,6 @@ async function saveDraftInternal(
     post.category = category;
     post.keywords = keywords;
     post.updatedAt = nowIso();
-    if (store.pipelineBrief && !post.research) post.research = store.pipelineBrief;
     await writeStore(store);
     return { id: post.id } as const;
   }
@@ -131,7 +130,7 @@ async function saveDraftInternal(
     aiDraft: false,
     wpPostId: null,
     channelResults: {},
-    research: store.pipelineBrief,
+    research: null,
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
@@ -402,9 +401,9 @@ export async function writerAction(_prev: { error?: string } | null, data: FormD
   return { error: "알 수 없는 작업입니다." };
 }
 
-/** Copilot 결과(이미 화면에 있는 값)를 파이프라인에 저장하고 글 작성으로 이동 */
+/** Copilot 결과를 새 초안 글에 붙이고 글 수정 화면으로 이동 (전역 brief 잔류 방지) */
 export async function continueToWriteAction(data: FormData) {
-  await requireUser();
+  const session = await requireUser();
   const keyword = form(data, "keyword");
   const fit = form(data, "fit");
   const angle = form(data, "angle");
@@ -444,7 +443,27 @@ export async function continueToWriteAction(data: FormData) {
   };
 
   const store = await readStore();
-  store.pipelineBrief = brief;
+  store.pipelineBrief = null;
+  const post: Post = {
+    id: newId("p"),
+    title: angle ? angle.slice(0, 80) : "",
+    content: "",
+    category: "",
+    keywords: keyword,
+    excerpt: "",
+    status: "draft",
+    authorId: session.id,
+    source: "",
+    reviewedAt: "",
+    caution: "",
+    aiDraft: false,
+    wpPostId: null,
+    channelResults: {},
+    research: brief,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  store.posts.unshift(post);
   await writeStore(store);
-  redirect(buildWriteHref(keyword, { fit: brief.fit, score: brief.score, angle: angle || undefined }));
+  redirect(`/write/${post.id}`);
 }

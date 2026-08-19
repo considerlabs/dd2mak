@@ -17,7 +17,8 @@ export function PipelineSteps({
     if (!q) return base;
     if (id === "keyword") return `/analyze/keyword?q=${encodeURIComponent(q)}`;
     if (id === "copilot") return `/analyze/copilot?q=${encodeURIComponent(q)}&from=keyword`;
-    if (id === "write") return `/write?keywords=${encodeURIComponent(q)}&from=pipeline`;
+    // 글 작성 단계는 항상 새 빈 화면. 기존 초안은 작성한 글에서 연다.
+    if (id === "write") return "/write";
     return base;
   }
 

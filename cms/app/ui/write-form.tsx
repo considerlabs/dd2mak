@@ -5,7 +5,7 @@ import { writerAction } from "@/app/actions";
 import { CategorySelect } from "@/app/ui/category-select";
 import { SubmitButton, secondaryBtn } from "@/app/ui/submit-button";
 import { plainCharCount } from "@/lib/content";
-import type { Post, ResearchBrief } from "@/lib/store";
+import type { Post } from "@/lib/store";
 import type { CategoryTree } from "@/lib/content";
 import Link from "next/link";
 
@@ -13,20 +13,16 @@ export function WriteForm({
   post,
   readOnly,
   tree,
-  brief,
-  angleHint,
 }: {
   post?: Post;
   readOnly?: boolean;
   tree: CategoryTree;
-  brief?: ResearchBrief | null;
-  angleHint?: string;
 }) {
   const [state, action] = useActionState(writerAction, null);
-  const [title, setTitle] = useState(post?.title || (angleHint ? angleHint.slice(0, 80) : ""));
-  const [keywords, setKeywords] = useState(post?.keywords || brief?.keyword || "");
+  const [title, setTitle] = useState(post?.title || "");
+  const [keywords, setKeywords] = useState(post?.keywords || "");
   const count = plainCharCount(post?.content || "");
-  const research = post?.research || brief || null;
+  const research = post?.research || null;
 
   return (
     <div className="space-y-4">
@@ -34,7 +30,7 @@ export function WriteForm({
         <section className="card border-primary/20 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">주제 선정 요약</p>
+              <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">이 글의 주제 선정</p>
               <p className="mt-1 text-sm font-semibold">
                 {research.keyword}
                 <span
@@ -81,11 +77,10 @@ export function WriteForm({
         </section>
       ) : !readOnly ? (
         <section className="rounded-xl border border-dashed border-border bg-[#f8fafc] px-4 py-3 text-sm text-muted-foreground">
-          주제 선정이 없다면{" "}
+          키워드 분석·적합도 진단을 거치면 이 글에 주제 요약이 붙습니다.{" "}
           <Link href="/analyze/keyword" className="font-semibold text-primary hover:underline">
-            키워드 분석 → Copilot
+            키워드 분석부터 시작
           </Link>
-          부터 시작하는 것을 권장합니다.
         </section>
       ) : null}
 
@@ -93,7 +88,7 @@ export function WriteForm({
         {state?.error ? <p className="mb-3 text-sm text-destructive">{state.error}</p> : null}
         <input type="hidden" name="id" value={post?.id || ""} />
         <div className="mb-3">
-          <CategorySelect tree={tree} value={post?.category} readOnly={readOnly} />
+          <CategorySelect key={post?.id || "new-cat"} tree={tree} value={post?.category || ""} readOnly={readOnly} />
         </div>
         <div className="mb-3">
           <label htmlFor="keywords">키워드</label>
@@ -116,7 +111,14 @@ export function WriteForm({
           readOnly={readOnly}
         />
         <label htmlFor="content">본문</label>
-        <textarea id="content" name="content" className="mb-2" defaultValue={post?.content || ""} readOnly={readOnly} />
+        <textarea
+          id="content"
+          name="content"
+          className="mb-2"
+          defaultValue={post?.content || ""}
+          readOnly={readOnly}
+          key={post?.id ? `${post.id}-content` : "new-content"}
+        />
         <p className="mb-4 text-xs text-muted-foreground">글자 수(태그 제외): {count}자 · 목표 약 2,000자</p>
 
         {post?.excerpt ? (
