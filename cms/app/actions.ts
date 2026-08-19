@@ -261,7 +261,8 @@ export async function saveSettingsAction(data: FormData): Promise<{ error?: stri
     const nextWpUser = form(data, "wpUser");
     if (nextWpUser) wp.user = nextWpUser;
     const wpPass = form(data, "wpAppPassword");
-    if (wpPass && !wpPass.includes("*")) wp.appPassword = wpPass;
+    // 로그인 비밀번호가 아니라 애플리케이션 비밀번호(공백 포함 가능)를 저장
+    if (wpPass && !wpPass.includes("*")) wp.appPassword = wpPass.trim();
     store.settings.wpUrl = wp.url;
     store.settings.wpUser = wp.user;
     store.settings.wpAppPassword = wp.appPassword;
@@ -379,6 +380,11 @@ export async function pingAction(data: FormData) {
       const { pingCopilot } = await import("@/lib/copilot");
       await pingCopilot();
       return { ok: true, message: "Copilot AI API 연결에 성공했습니다." };
+    }
+    if (scope === "wordpress") {
+      const { pingWordPress } = await import("@/lib/wordpress");
+      const name = await pingWordPress();
+      return { ok: true, message: `워드프레스 연결에 성공했습니다. (${name})` };
     }
     const provider = form(data, "provider");
     await pingProvider(provider);

@@ -65,6 +65,13 @@ export function SettingsForm({
     async (_p: { error?: string; message?: string } | null, data: FormData) => pingAction(data),
     null
   );
+  const [wpPing, wpPingAct] = useActionState(
+    async (_p: { error?: string; message?: string } | null, data: FormData) => {
+      data.set("scope", "wordpress");
+      return pingAction(data);
+    },
+    null
+  );
 
   useEffect(() => {
     if (saved?.message) router.refresh();
@@ -252,10 +259,24 @@ export function SettingsForm({
                   id="wpAppPassword"
                   name="wpAppPassword"
                   type="password"
-                  className="mb-4"
+                  className="mb-2"
                   defaultValue={mask(channels.wordpress.appPassword)}
+                  placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
+                  autoComplete="off"
                 />
-                <SubmitButton>워드프레스 저장</SubmitButton>
+                <p className="mb-4 text-xs text-muted-foreground">
+                  사이트 로그인 비밀번호가 아닙니다. WP 관리자 → 사용자 → 프로필 하단에서 &quot;애플리케이션
+                  비밀번호&quot;를 생성해 붙여넣으세요.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <SubmitButton>워드프레스 저장</SubmitButton>
+                </div>
+              </form>
+              <form action={wpPingAct} className="rounded-xl border border-dashed border-border p-4">
+                <p className="mb-2 text-xs text-muted-foreground">저장한 계정으로 REST 발행 권한을 확인합니다.</p>
+                {wpPing?.error ? <p className="mb-2 text-sm text-destructive">{wpPing.error}</p> : null}
+                {wpPing?.message ? <p className="mb-2 text-sm text-success">{wpPing.message}</p> : null}
+                <SubmitButton className={secondaryBtn}>워드프레스 연결 확인</SubmitButton>
               </form>
 
               <form action={saveAction} className="rounded-xl border border-border p-4">

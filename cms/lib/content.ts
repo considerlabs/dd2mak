@@ -13,41 +13,45 @@ export type CategoryTree = {
   children: Record<string, CategoryNode[]>;
 };
 
+const CATEGORY_CHILDREN: Record<string, CategoryNode[]> = {
+  health: [
+    { slug: "fall-prevention", name: "낙상 예방" },
+    { slug: "checkup", name: "건강검진" },
+    { slug: "medication", name: "복약 관리" },
+  ],
+  welfare: [
+    { slug: "basic-pension", name: "기초연금" },
+    { slug: "dental", name: "임플란트·틀니" },
+    { slug: "transport", name: "교통·통신" },
+    { slug: "energy-voucher", name: "에너지 바우처" },
+  ],
+  jobs: [
+    { slug: "job-listings", name: "채용정보" },
+    { slug: "senior-jobs", name: "노인일자리" },
+    { slug: "reemployment-edu", name: "재취업 교육" },
+  ],
+  finance: [
+    { slug: "national-pension", name: "국민연금" },
+    { slug: "retirement-finance", name: "노후 재무" },
+  ],
+  leisure: [
+    { slug: "lifelong-learning", name: "평생학습" },
+    { slug: "hobby", name: "취미·여가" },
+  ],
+  digital: [
+    { slug: "kakaotalk", name: "카카오톡" },
+    { slug: "kiosk", name: "키오스크" },
+    { slug: "mobile-banking", name: "모바일뱅킹" },
+    { slug: "gov24", name: "정부24" },
+    { slug: "scam-prevention", name: "사기 예방" },
+  ],
+};
+
 export const CATEGORY_TREE: CategoryTree = {
-  parents: Object.entries(CATEGORIES).map(([slug, name]) => ({ slug, name })),
-  children: {
-    health: [
-      { slug: "fall-prevention", name: "낙상 예방" },
-      { slug: "checkup", name: "건강검진" },
-      { slug: "medication", name: "복약 관리" },
-    ],
-    welfare: [
-      { slug: "basic-pension", name: "기초연금" },
-      { slug: "dental", name: "임플란트·틀니" },
-      { slug: "transport", name: "교통·통신" },
-      { slug: "energy-voucher", name: "에너지 바우처" },
-    ],
-    jobs: [
-      { slug: "job-listings", name: "채용정보" },
-      { slug: "senior-jobs", name: "노인일자리" },
-      { slug: "reemployment-edu", name: "재취업 교육" },
-    ],
-    finance: [
-      { slug: "national-pension", name: "국민연금" },
-      { slug: "retirement-finance", name: "노후 재무" },
-    ],
-    leisure: [
-      { slug: "lifelong-learning", name: "평생학습" },
-      { slug: "hobby", name: "취미·여가" },
-    ],
-    digital: [
-      { slug: "kakaotalk", name: "카카오톡" },
-      { slug: "kiosk", name: "키오스크" },
-      { slug: "mobile-banking", name: "모바일뱅킹" },
-      { slug: "gov24", name: "정부24" },
-      { slug: "scam-prevention", name: "사기 예방" },
-    ],
-  },
+  parents: Object.entries(CATEGORIES)
+    .filter(([slug]) => (CATEGORY_CHILDREN[slug] || []).length > 0)
+    .map(([slug, name]) => ({ slug, name })),
+  children: CATEGORY_CHILDREN,
 };
 
 export const STATUS_LABEL: Record<string, string> = {

@@ -3,10 +3,19 @@
 import { useMemo, useState } from "react";
 import type { CategoryTree } from "@/lib/content";
 
+function parentsWithChildren(tree: CategoryTree) {
+  return tree.parents.filter((p) => (tree.children[p.slug] || []).length > 0);
+}
+
 function resolve(tree: CategoryTree, slug?: string) {
   if (!slug) return { parent: "", child: "" };
-  if (tree.parents.some((p) => p.slug === slug)) return { parent: slug, child: "" };
+  const parents = parentsWithChildren(tree);
+  if (parents.some((p) => p.slug === slug)) {
+    // 상위만 저장된 예전 글: 하위가 있는 상위로만 복원 (하위는 비움 → 재선택 유도)
+    return { parent: slug, child: "" };
+  }
   for (const [parent, kids] of Object.entries(tree.children)) {
+    if (!parents.some((p) => p.slug === parent)) continue;
     if (kids.some((k) => k.slug === slug)) return { parent, child: slug };
   }
   return { parent: "", child: "" };
@@ -21,11 +30,12 @@ export function CategorySelect({
   value?: string;
   readOnly?: boolean;
 }) {
+  const parents = useMemo(() => parentsWithChildren(tree), [tree]);
   const initial = useMemo(() => resolve(tree, value), [tree, value]);
   const [parent, setParent] = useState(initial.parent);
   const [child, setChild] = useState(initial.child);
-  const kids = tree.children[parent] || [];
-  const final = child || parent;
+  const kids = parent ? tree.children[parent] || [] : [];
+  const final = child;
 
   return (
     <div>
@@ -43,7 +53,7 @@ export function CategorySelect({
           className="max-w-xs"
         >
           <option value="">주메뉴 선택</option>
-          {tree.parents.map((p) => (
+          {parents.map((p) => (
             <option key={p.slug} value={p.slug}>
               {p.name}
             </option>
@@ -51,28 +61,23 @@ export function CategorySelect({
         </select>
         <select
           id="post_category_child"
+          required
           disabled={readOnly || !parent || kids.length === 0}
           value={child}
           onChange={(e) => setChild(e.target.value)}
           className="max-w-xs"
         >
-          {!parent ? <option value="">먼저 주메뉴를 선택하세요</option> : null}
-          {parent && kids.length === 0 ? <option value="">(하위메뉴 없음)</option> : null}
-          {parent && kids.length > 0 ? (
-            <>
-              <option value="">선택 안 함 (주메뉴로 등록)</option>
-              {kids.map((k) => (
-                <option key={k.slug} value={k.slug}>
-                  {k.name}
-                </option>
-              ))}
-            </>
-          ) : null}
+          <option value="">{parent ? "하위메뉴 선택" : "먼저 주메뉴를 선택하세요"}</option>
+          {kids.map((k) => (
+            <option key={k.slug} value={k.slug}>
+              {k.name}
+            </option>
+          ))}
         </select>
       </div>
       <input type="hidden" name="category" value={final} />
       <p className="mt-2 text-xs text-muted-foreground">
-        주메뉴를 고르면 오른쪽에 해당 하위메뉴가 나타납니다. 하위메뉴가 없거나 주메뉴로 바로 등록하려면 &quot;선택 안 함&quot;으로 두세요.
+        하위메뉴가 있는 주메뉴만 표시됩니다. 주메뉴를 고른 뒤 하위메뉴를 선택하세요.
       </p>
     </div>
   );

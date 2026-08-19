@@ -70,6 +70,15 @@ function dd2mak_easy_writer_category_tree() {
 		}
 	}
 
+	// 하위메뉴가 없는 주메뉴는 선택지에서 제외
+	$parents = array_filter(
+		$parents,
+		static function ( $slug ) use ( $children ) {
+			return ! empty( $children[ $slug ] );
+		},
+		ARRAY_FILTER_USE_KEY
+	);
+
 	return array(
 		'parents'  => $parents,
 		'children' => $children,
@@ -205,7 +214,7 @@ function dd2mak_render_easy_writer_page() {
 							<option value="">먼저 주메뉴를 선택하세요</option>
 						</select>
 						<input type="hidden" name="post_category" id="post_category_final" value="<?php echo esc_attr( $posted_category ); ?>">
-						<p class="description">주메뉴를 고르면 오른쪽에 해당 하위메뉴가 나타납니다. 하위메뉴가 없거나 주메뉴로 바로 등록하려면 "선택 안 함"으로 두세요.</p>
+						<p class="description">하위메뉴가 있는 주메뉴만 표시됩니다. 주메뉴를 고른 뒤 하위메뉴를 선택하세요.</p>
 					</td>
 				</tr>
 				<tr>
@@ -261,23 +270,27 @@ function dd2mak_render_easy_writer_page() {
 				placeholder.textContent = '먼저 주메뉴를 선택하세요';
 				childSelect.appendChild( placeholder );
 				childSelect.disabled = true;
+				childSelect.required = false;
 				return;
 			}
 
 			if ( ! slugs.length ) {
-				var none = document.createElement( 'option' );
-				none.value = '';
-				none.textContent = '(하위메뉴 없음)';
-				childSelect.appendChild( none );
+				// 하위 없는 상위는 목록에 없어야 함 — 방어적으로 비활성
+				var empty = document.createElement( 'option' );
+				empty.value = '';
+				empty.textContent = '하위메뉴 선택';
+				childSelect.appendChild( empty );
 				childSelect.disabled = true;
+				childSelect.required = false;
 				return;
 			}
 
 			childSelect.disabled = false;
+			childSelect.required = true;
 
 			var emptyOpt = document.createElement( 'option' );
 			emptyOpt.value = '';
-			emptyOpt.textContent = '선택 안 함 (주메뉴로 등록)';
+			emptyOpt.textContent = '하위메뉴 선택';
 			childSelect.appendChild( emptyOpt );
 
 			slugs.forEach( function ( slug ) {
@@ -292,7 +305,7 @@ function dd2mak_render_easy_writer_page() {
 		}
 
 		function updateFinal() {
-			finalInput.value = childSelect.value || parentSelect.value;
+			finalInput.value = childSelect.value || '';
 		}
 
 		parentSelect.addEventListener( 'change', function () {
