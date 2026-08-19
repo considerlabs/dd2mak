@@ -1,7 +1,7 @@
 <?php
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'DD2MAK_VERSION', '1.0.0' );
+define( 'DD2MAK_VERSION', '1.0.1' );
 
 /**
  * 테마 기본 설정

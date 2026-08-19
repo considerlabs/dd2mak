@@ -107,6 +107,87 @@ function dd2mak_job_card( $post_id = null ) {
 }
 
 /**
+ * primary 메뉴: 카테고리 상위 항목에 WP 하위 카테고리를 하위메뉴로 붙인다.
+ * (메뉴에 이미 있는 하위는 유지하고, 없는 것만 추가)
+ */
+function dd2mak_attach_category_children_to_menu( $items, $args ) {
+	if ( empty( $args->theme_location ) || 'primary' !== $args->theme_location || empty( $items ) ) {
+		return $items;
+	}
+
+	$existing_child_ids = array(); // parent_menu_id => [ category_term_id => true ]
+	foreach ( $items as $item ) {
+		$parent_id = (int) $item->menu_item_parent;
+		if ( $parent_id > 0 && 'category' === $item->object ) {
+			$existing_child_ids[ $parent_id ][ (int) $item->object_id ] = true;
+		}
+	}
+
+	$extra   = array();
+	$fake_id = 900000;
+
+	foreach ( $items as $item ) {
+		if ( (int) $item->menu_item_parent !== 0 ) {
+			continue;
+		}
+		if ( 'category' !== $item->object ) {
+			continue;
+		}
+
+		$children = get_categories( array(
+			'parent'     => (int) $item->object_id,
+			'hide_empty' => false,
+			'orderby'    => 'name',
+			'order'      => 'ASC',
+		) );
+		if ( empty( $children ) || is_wp_error( $children ) ) {
+			continue;
+		}
+
+		$already = isset( $existing_child_ids[ $item->ID ] ) ? $existing_child_ids[ $item->ID ] : array();
+		foreach ( $children as $child ) {
+			if ( isset( $already[ (int) $child->term_id ] ) ) {
+				continue;
+			}
+			$fake_id++;
+			$child_item                   = new stdClass();
+			$child_item->ID               = $fake_id;
+			$child_item->db_id            = $fake_id;
+			$child_item->menu_item_parent = (int) $item->ID;
+			$child_item->object_id        = (int) $child->term_id;
+			$child_item->object           = 'category';
+			$child_item->type             = 'taxonomy';
+			$child_item->type_label       = '카테고리';
+			$child_item->url              = get_category_link( $child->term_id );
+			$child_item->title            = $child->name;
+			$child_item->target           = '';
+			$child_item->attr_title       = '';
+			$child_item->description      = '';
+			$child_item->xfn              = '';
+			$child_item->status           = '';
+			$child_item->classes          = array(
+				'menu-item',
+				'menu-item-type-taxonomy',
+				'menu-item-object-category',
+				'menu-item-' . $fake_id,
+			);
+			$extra[] = $child_item;
+		}
+
+		if ( ! in_array( 'menu-item-has-children', (array) $item->classes, true ) ) {
+			$item->classes[] = 'menu-item-has-children';
+		}
+	}
+
+	if ( empty( $extra ) ) {
+		return $items;
+	}
+
+	return array_merge( $items, $extra );
+}
+add_filter( 'wp_nav_menu_objects', 'dd2mak_attach_category_children_to_menu', 20, 2 );
+
+/**
  * 간단한 이동 경로(breadcrumb)
  */
 function dd2mak_breadcrumb() {
