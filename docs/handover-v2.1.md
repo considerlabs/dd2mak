@@ -1,5 +1,7 @@
 # 인수인계 문서 v2.1 — dd2mak
 
+> **최신 인수인계는 `docs/handover-v2.2.md` (2026-08-19).** 이 문서는 Redis·계정·Copilot·배포 보호까지 반영한 v2.1 기록이다.
+
 작성일: 2026-08-18 (최종 업데이트: 2026-08-19 — §2, §5.2 체크리스트 전부 반영)
 대상: 이 프로젝트를 이어받아 운영·개발할 담당자
 이전 문서: `docs/handover-v2.0.md` (v2.0, 2026-08-17, CMS 화면 개편)
@@ -174,6 +176,7 @@ Vercel 대시보드(`vercel.com/briank-projects/dd2mak/settings/deployment-prote
 
 ## 8. 관련 문서
 
+- `docs/handover-v2.2.md` — **최신** (브랜드·카테고리·테마 1.0.3·글작성 흐름·내 정보)
 - `docs/handover-v2.0.md` — CMS 대시보드 UI 개편 이력 (색·레이아웃)
 - `docs/handover.md` — v1.0 워드프레스 테마 세션
 - 나머지는 v2.0 §10과 동일
