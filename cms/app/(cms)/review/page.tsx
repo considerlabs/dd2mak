@@ -35,6 +35,7 @@ export default async function ReviewListPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-14">No</th>
                 <th>제목</th>
                 <th>작성자</th>
                 <th>카테고리</th>
@@ -45,13 +46,14 @@ export default async function ReviewListPage() {
             <tbody>
               {posts.length === 0 ? (
                 <tr>
-                  <td className="!py-12 text-center text-muted-foreground" colSpan={5}>
+                  <td className="!py-12 text-center text-muted-foreground" colSpan={6}>
                     검수 대기 중인 글이 없습니다.
                   </td>
                 </tr>
               ) : (
-                posts.map((p) => (
+                posts.map((p, index) => (
                   <tr key={p.id}>
+                    <td className="text-muted-foreground tabular-nums">{index + 1}</td>
                     <td>
                       <Link className="font-semibold hover:text-primary" href={`/review/${p.id}`}>
                         {p.title || "(제목 없음)"}
