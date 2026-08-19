@@ -12,9 +12,9 @@ export function AccountForm() {
 
   return (
     <div className="space-y-4">
-      <form action={action} className="card max-w-md p-6" key={state?.message || "form"}>
+      <form action={action} className="card p-6" key={state?.message || "form"}>
         <div className="mb-5">
-          <h2 className="text-sm font-semibold">비밀번호 변경</h2>
+          <h2 className="text-sm font-semibold">보안</h2>
           <p className="mt-1 text-xs text-muted-foreground">현재 비밀번호를 확인한 뒤 새 비밀번호로 바꿉니다.</p>
         </div>
 
@@ -60,9 +60,9 @@ export function AccountForm() {
         <SubmitButton>비밀번호 변경</SubmitButton>
       </form>
 
-      <div className="card max-w-md p-6">
+      <div className="card p-6">
         <div className="mb-4">
-          <h2 className="text-sm font-semibold">로그아웃</h2>
+          <h2 className="text-sm font-semibold">세션</h2>
           <p className="mt-1 text-xs text-muted-foreground">이 기기에서 계정 접속을 종료합니다.</p>
         </div>
         <form action={logoutAction}>
